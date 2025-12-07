@@ -4,6 +4,7 @@ Provides Azure-branded UI components with excellent contrast and readability
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 from typing import Optional
 
 class AzureTheme:
@@ -202,7 +203,9 @@ class AzureTheme:
     
     @staticmethod
     def azure_card(title: str, content: str, icon: str = None):
-        """Azure card component"""
+        """Azure card component - uses components.html to prevent escaping"""
+        icon_html = f'<span style="font-size: 1.5em; margin-right: 10px;">{icon}</span>' if icon else ""
+        
         html = f"""
         <div style="
             background-color: white;
@@ -214,7 +217,7 @@ class AzureTheme:
             box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         ">
             <div style="display: flex; align-items: center; margin-bottom: 12px;">
-                {f'<span style="font-size: 1.5em; margin-right: 10px;">{icon}</span>' if icon else ""}
+                {icon_html}
                 <h3 style="margin: 0; color: #003366; font-size: 1.2em;">{title}</h3>
             </div>
             <div style="color: #5C5C5C; line-height: 1.6;">
@@ -222,7 +225,8 @@ class AzureTheme:
             </div>
         </div>
         """
-        st.markdown(html, unsafe_allow_html=True)
+        # Use components.html instead of st.markdown to prevent HTML escaping
+        components.html(html, height=200)
     
     @staticmethod
     def azure_table_header():
