@@ -166,14 +166,31 @@ class GlobalSidebar:
             
             # Platform stats
             st.markdown("### 📊 Platform Stats")
-            st.metric("Connected Accounts", len(active_accounts))
-            st.metric("Active Regions", len(AppConfig.DEFAULT_REGIONS))
+            st.metric(f"Connected {item_label}", len(active_items))
             
-            # Account health
-            st.markdown("### 🏥 Account Health")
-            for acc in active_accounts[:3]:  # Show first 3
-                status_icon = "✅" if acc.status == "active" else "❌"
-                st.caption(f"{status_icon} {acc.account_name}")
+            # Get regions based on cloud provider
+            if cloud_provider == "AWS":
+                regions = AppConfig.AWS_REGIONS
+            elif cloud_provider == "Azure":
+                regions = AppConfig.AZURE_REGIONS
+            else:  # GCP
+                regions = AppConfig.GCP_REGIONS
             
-            if len(active_accounts) > 3:
-                st.caption(f"... and {len(active_accounts) - 3} more")
+            st.metric("Active Regions", len(regions))
+            
+            # Health status
+            health_label = "Account Health" if cloud_provider == "AWS" else "Subscription Health" if cloud_provider == "Azure" else "Project Health"
+            st.markdown(f"### 🏥 {health_label}")
+            for item in active_items[:3]:  # Show first 3
+                status_icon = "✅" if item.status == "active" else "❌"
+                # Get name based on cloud provider
+                if cloud_provider == "AWS":
+                    item_name = item.account_name
+                elif cloud_provider == "Azure":
+                    item_name = item.subscription_name
+                else:  # GCP
+                    item_name = item.project_name
+                st.caption(f"{status_icon} {item_name}")
+            
+            if len(active_items) > 3:
+                st.caption(f"... and {len(active_items) - 3} more")
