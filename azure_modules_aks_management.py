@@ -1,318 +1,231 @@
 """
-Azure Kubernetes Service (AKS) Management - AI-Powered Operations
+AKS Operations Intelligence Center - AI-Powered Day 2 Operations
 Complete lifecycle management, monitoring, optimization, and troubleshooting for AKS clusters
+Azure Kubernetes Service management with operational excellence
 """
 
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime, timedelta
-from azure_theme import AzureTheme
-from config_settings import AppConfig
+from typing import Dict, List
 import json
+import uuid
 
-class AzureAKSManagementModule:
+class AKSManagementModule:
     """AI-Enhanced AKS Operations Intelligence Center"""
     
     @staticmethod
     def render():
         """Render AKS Operations Intelligence Center"""
         
-        AzureTheme.azure_header(
-            "AKS Operations Intelligence",
-            "AI-Powered Day 2 Operations - Monitor, Optimize, Secure, and Troubleshoot your AKS clusters",
-            "⎈"
-        )
+        if 'aks_session_id' not in st.session_state:
+            st.session_state.aks_session_id = str(uuid.uuid4())[:8]
         
-        subscriptions = AppConfig.load_azure_subscriptions()
-        active_subs = [sub for sub in subscriptions if sub.status == 'active']
+        st.title("⎈ AKS Operations Intelligence Center")
+        st.markdown("**AI-Powered Day 2 Operations** - Monitor, Optimize, Secure, and Troubleshoot your AKS clusters")
         
-        if st.session_state.get('mode') == 'Demo':
-            AzureTheme.azure_info_box(
-                "Demo Mode Active",
-                "Using sample AKS cluster data for demonstration. Connect your Azure account for real cluster operations.",
-                "info"
-            )
+        st.info("💡 **Azure Integration:** Azure Monitor, Container Insights, Azure Policy, Defender for Containers")
         
-        # Create comprehensive tabs with AI
+        subscriptions = ["prod-subscription-001", "dev-subscription-001", "aks-subscription-001"]
+        selected_subscription = st.selectbox("Select Azure Subscription", options=subscriptions,
+            key=f"aks_sub_{st.session_state.aks_session_id}")
+        
         tabs = st.tabs([
             "🎯 Operations Dashboard",
-            "⚙️ Cluster Management",
-            "📦 Workloads & Pods",
+            "🔍 AI Troubleshooting",
+            "🛡️ Security & Compliance",
             "💰 Cost Optimization",
-            "🔒 Security & Compliance",
-            "🤖 AI Insights",
-            "📊 Reports & Export"
+            "📈 Performance Analytics",
+            "🔗 CI/CD Integration",
+            "⚡ Quick Actions"
         ])
         
         with tabs[0]:
-            AzureAKSManagementModule._render_operations_dashboard(subscriptions)
-        
+            AKSManagementModule._render_operations_dashboard(selected_subscription)
         with tabs[1]:
-            AzureAKSManagementModule._render_cluster_management(subscriptions)
-        
+            AKSManagementModule._render_ai_troubleshooting(selected_subscription)
         with tabs[2]:
-            AzureAKSManagementModule._render_workloads(subscriptions)
-        
+            AKSManagementModule._render_security_compliance(selected_subscription)
         with tabs[3]:
-            AzureAKSManagementModule._render_cost_optimization(subscriptions)
-        
+            AKSManagementModule._render_cost_optimization(selected_subscription)
         with tabs[4]:
-            AzureAKSManagementModule._render_security(subscriptions)
-        
+            AKSManagementModule._render_performance_analytics(selected_subscription)
         with tabs[5]:
-            AzureAKSManagementModule._render_ai_insights()
-        
+            AKSManagementModule._render_cicd_integration(selected_subscription)
         with tabs[6]:
-            AzureAKSManagementModule._render_reports(subscriptions)
+            AKSManagementModule._render_quick_actions(selected_subscription)
     
     @staticmethod
-    def _render_operations_dashboard(subscriptions):
+    def _render_operations_dashboard(subscription):
         """Real-time operations dashboard"""
-        
-        AzureTheme.azure_section_header("🎯 Real-Time Operations Dashboard", "📊")
-        
+        st.markdown("## 🎯 Real-Time Operations Dashboard")
         st.info("📊 Live monitoring across all AKS clusters with AI-powered insights")
         
-        # Overall health metrics
         col1, col2, col3, col4, col5 = st.columns(5)
-        
         with col1:
-            st.metric("Total Clusters", "8", delta="↑ 1 this week")
-        
+            st.metric("Total Clusters", "14", delta="↑ 3 this week")
         with col2:
-            st.metric("Healthy Clusters", "7", delta="88%")
-        
+            st.metric("Healthy Clusters", "12", delta="86%")
         with col3:
-            st.metric("Total Pods", "634", delta="↑ 32 today")
-        
+            st.metric("Total Pods", "923", delta="↑ 52 today")
         with col4:
-            st.metric("Active Alerts", "2", delta="↓ 3")
-        
+            st.metric("Active Alerts", "4", delta="↓ 3", delta_color="inverse")
         with col5:
-            st.metric("Monthly Cost", "$12,847", delta="↑ 8%")
+            st.metric("Cost (Monthly)", "$8,450", delta="↓ $320")
         
-        st.markdown("---")
+        st.markdown("### 📊 Cluster Status")
+        clusters = [
+            {"Cluster": "aks-prod-eastus", "Status": "🟢 Healthy", "Version": "1.28.3", "Nodes": "12", "Pods": "247", "CPU": "68%", "Memory": "72%"},
+            {"Cluster": "aks-prod-westus", "Status": "🟢 Healthy", "Version": "1.28.3", "Nodes": "10", "Pods": "198", "CPU": "54%", "Memory": "61%"},
+            {"Cluster": "aks-staging", "Status": "🟡 Warning", "Version": "1.27.7", "Nodes": "6", "Pods": "145", "CPU": "89%", "Memory": "85%"}
+        ]
+        st.dataframe(pd.DataFrame(clusters), use_container_width=True, hide_index=True)
         
-        # Cluster overview table
-        st.markdown("### 📊 Cluster Status Overview")
+        st.markdown("### 🚨 Active Alerts")
+        alerts = [
+            {"Severity": "🟡", "Cluster": "aks-staging", "Alert": "High CPU (89%)", "Duration": "2h 15m"},
+            {"Severity": "🟡", "Cluster": "aks-staging", "Alert": "Memory pressure", "Duration": "1h 45m"}
+        ]
+        st.dataframe(pd.DataFrame(alerts), use_container_width=True, hide_index=True)
+    
+    @staticmethod
+    def _render_ai_troubleshooting(subscription):
+        """AI troubleshooting"""
+        st.markdown("## 🔍 AI-Powered Troubleshooting")
         
-        clusters_data = [
-            {"Cluster": "prod-aks-eastus", "Subscription": "Production", "Location": "East US", "Nodes": 12, "Pods": 247, "CPU Usage": "67%", "Memory Usage": "72%", "Health": "✅ Healthy", "Version": "1.28.3", "Cost/Month": "$4,235"},
-            {"Cluster": "prod-aks-westus", "Subscription": "Production", "Location": "West US", "Nodes": 10, "Pods": 198, "CPU Usage": "54%", "Memory Usage": "61%", "Health": "✅ Healthy", "Version": "1.28.3", "Cost/Month": "$3,420"},
-            {"Cluster": "staging-aks", "Subscription": "Non-Production", "Location": "East US 2", "Nodes": 6, "Pods": 89, "CPU Usage": "38%", "Memory Usage": "45%", "Health": "✅ Healthy", "Version": "1.28.3", "Cost/Month": "$2,150"},
-            {"Cluster": "dev-aks-eastus", "Subscription": "Development", "Location": "East US", "Nodes": 4, "Pods": 67, "CPU Usage": "82%", "Memory Usage": "88%", "Health": "⚠️ High Usage", "Version": "1.27.9", "Cost/Month": "$1,420"},
-            {"Cluster": "dev-aks-test", "Subscription": "Development", "Location": "Central US", "Nodes": 3, "Pods": 33, "CPU Usage": "15%", "Memory Usage": "22%", "Health": "⚠️ Underutilized", "Version": "1.28.3", "Cost/Month": "$980"}
+        questions = [
+            "Why is my pod stuck in Pending?",
+            "How to debug CrashLoopBackOff?",
+            "What's causing high memory usage?",
+            "Why are nodes not joining?",
+            "Troubleshoot ImagePullBackOff?"
         ]
         
-        clusters_df = pd.DataFrame(clusters_data)
-        st.dataframe(clusters_df, use_container_width=True, hide_index=True)
+        for q in questions:
+            if st.button(f"💡 {q}", key=f"q_{q}"):
+                st.info(f"🤖 Analyzing: {q}")
         
-        st.markdown("---")
-        
-        # Charts
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("### 📊 Pod Distribution by Cluster")
-            fig = px.bar(clusters_df, x='Cluster', y='Pods', color='Health', title='Active Pods per Cluster', color_discrete_map={'✅ Healthy': '#34A853', '⚠️ High Usage': '#FBBC04', '⚠️ Underutilized': '#EA4335'})
-            fig.update_layout(showlegend=True, height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("### 💰 Monthly Cost by Cluster")
-            clusters_df['Cost_Value'] = clusters_df['Cost/Month'].str.replace('$', '').str.replace(',', '').astype(float)
-            fig = px.pie(clusters_df, values='Cost_Value', names='Cluster', title='Cost Distribution', hole=0.4)
-            fig.update_traces(textposition='inside', textinfo='percent+label')
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
+        user_issue = st.text_area("Describe issue:", placeholder="Pods getting evicted...")
+        if st.button("🚀 Get AI Diagnosis", type="primary"):
+            if user_issue:
+                st.success("✅ **AI Diagnosis:** Node memory pressure. Increase memory requests and enable VPA.")
     
     @staticmethod
-    def _render_cluster_management(subscriptions):
-        """Cluster lifecycle management"""
-        
-        AzureTheme.azure_section_header("⚙️ Cluster Lifecycle Management", "🔧")
-        
-        cluster_name = st.selectbox("Select AKS Cluster", ["prod-aks-eastus", "prod-aks-westus", "staging-aks", "dev-aks-eastus", "dev-aks-test"], key="aks_cluster_select")
-        
-        st.markdown("---")
-        
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.markdown("### 📋 Cluster Configuration")
-            
-            with st.expander("⚙️ Basic Settings", expanded=True):
-                st.text_input("Cluster Name", value=cluster_name, key="cluster_name_input")
-                st.selectbox("Kubernetes Version", ["1.28.3", "1.27.9", "1.26.6"], key="k8s_version")
-                st.selectbox("Location", ["East US", "West US", "Central US"], key="location")
-            
-            with st.expander("🔧 Node Pool Configuration"):
-                st.number_input("Min Nodes", min_value=1, max_value=100, value=3, key="min_nodes")
-                st.number_input("Max Nodes", min_value=1, max_value=100, value=10, key="max_nodes")
-                st.selectbox("VM Size", ["Standard_D2s_v3", "Standard_D4s_v3"], key="vm_size")
-                st.checkbox("Enable Autoscaling", value=True, key="enable_autoscale")
-        
-        with col2:
-            st.markdown("### 🎯 Quick Actions")
-            if st.button("🔄 Upgrade Cluster", type="primary", use_container_width=True):
-                st.success("✅ Cluster upgrade initiated (Demo mode)")
-            if st.button("⚡ Scale Node Pool", use_container_width=True):
-                st.success("✅ Scaling initiated (Demo mode)")
-    
-    @staticmethod
-    def _render_workloads(subscriptions):
-        """Pod and workload management"""
-        
-        AzureTheme.azure_section_header("📦 Workloads & Pod Management", "🚀")
-        
-        namespace = st.selectbox("Select Namespace", ["default", "kube-system", "production", "staging"], key="namespace_select")
-        
-        st.markdown("---")
+    def _render_security_compliance(subscription):
+        """Security and compliance"""
+        st.markdown("## 🛡️ Security & Compliance")
         
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Running Pods", "247", delta="↑ 12 today")
+            st.metric("Security Score", "87/100", "↑5")
         with col2:
-            st.metric("Pending Pods", "3", delta="↓ 2")
+            st.metric("Violations", "12", "↓8")
         with col3:
-            st.metric("Failed Pods", "1")
+            st.metric("Vulnerabilities", "34", "↓15")
         with col4:
-            st.metric("Deployments", "34", delta="↑ 2")
-    
-    @staticmethod
-    def _render_cost_optimization(subscriptions):
-        """Cost analysis"""
+            st.metric("RBAC Policies", "45")
         
-        AzureTheme.azure_section_header("💰 Cost Optimization & Analysis", "💵")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Monthly Total", "$12,847", delta="↑ 8%")
-        with col2:
-            st.metric("Compute Costs", "$9,240", delta="72%")
-        with col3:
-            st.metric("Storage Costs", "$2,150", delta="17%")
-        with col4:
-            st.metric("Network Costs", "$1,457", delta="11%")
-    
-    @staticmethod
-    def _render_security(subscriptions):
-        """Security analysis"""
-        
-        AzureTheme.azure_section_header("🔒 Security & Compliance Analysis", "🛡️")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Security Score", "78/100", delta="↑ 5 points")
-        with col2:
-            st.metric("Critical Issues", "2")
-        with col3:
-            st.metric("High Issues", "5", delta="↓ 3")
-        with col4:
-            st.metric("Compliance", "85%", delta="↑ 8%")
-    
-    @staticmethod
-    def _render_ai_insights():
-        """AI-powered insights"""
-        
-        AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")
-        
-        st.info("🤖 AI Analysis Summary with Intelligent Recommendations")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("AI Confidence", "96%", delta="↑ 2%")
-        with col2:
-            st.metric("Recommendations", "8", delta="↑ 2")
-        with col3:
-            st.metric("Auto-Fixes", "5", "Available")
-        with col4:
-            st.metric("Potential Savings", "$3,812/mo", delta="30%")
-        
-        st.markdown("---")
-        st.markdown("### 💡 AI-Powered Recommendations")
-        
-        recommendations = [
-            {"title": "Optimize Node Pool Sizing", "description": "dev-aks-test has 3 nodes with <20% avg utilization. Reduce to 2 nodes.", "impact": "Save $1,270/month (37% reduction)", "confidence": 96, "auto_fix": True},
-            {"title": "Fix Pod CrashLoopBackOff", "description": "Pod 'db-migration' is OOMKilled - needs more memory.", "impact": "Resolve production issue", "confidence": 98, "auto_fix": True},
-            {"title": "Enable Auto-Shutdown for Dev", "description": "Dev clusters run 24/7 but only used 40 hrs/week.", "impact": "Save $1,200/month (50% reduction)", "confidence": 98, "auto_fix": True}
+        st.markdown("### 🔍 Security Findings")
+        findings = [
+            {"Severity": "🔴", "Finding": "Privileged container", "Cluster": "aks-staging", "Action": "Remove privileges"},
+            {"Severity": "🟡", "Finding": "Untrusted registry", "Cluster": "aks-dev", "Action": "Use ACR"}
         ]
-        
-        for i, rec in enumerate(recommendations):
-            with st.expander(f"**{rec['title']}** - {rec['impact']} • {rec['confidence']}% confidence"):
-                st.write(f"**Analysis:** {rec['description']}")
-                col1, col2 = st.columns(2)
-                with col1:
-                    if rec['auto_fix'] and st.button("✅ Apply Fix", key=f"ai_apply_{i}", use_container_width=True):
-                        st.success("✅ Applied! (Demo mode)")
-                with col2:
-                    if st.button("📊 Simulate", key=f"ai_sim_{i}", use_container_width=True):
-                        st.info("Simulation shown")
-        
-        st.markdown("---")
-        st.markdown("### 💬 AI Troubleshooting Assistant")
-        
-        user_query = st.text_area("Ask about your AKS infrastructure:", placeholder="e.g., Why is my pod crashing?", height=100, key="aks_ai_query")
-        
-        if st.button("🤖 Ask AI", type="primary", use_container_width=True):
-            if user_query:
-                with st.spinner("🤖 AI analyzing..."):
-                    import time
-                    time.sleep(1)
-                    st.markdown("### 🤖 AI Response:")
-                    st.markdown(AzureAKSManagementModule._generate_ai_response(user_query))
+        st.dataframe(pd.DataFrame(findings), use_container_width=True, hide_index=True)
     
     @staticmethod
-    def _render_reports(subscriptions):
-        """Reports and export"""
+    def _render_cost_optimization(subscription):
+        """Cost optimization"""
+        st.markdown("## 💰 Cost Optimization")
         
-        AzureTheme.azure_section_header("📊 Reports & Export", "📤")
-        
-        col1, col2 = st.columns(2)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.markdown("**📊 Cluster Health Report**")
-            if st.button("📥 Generate", key="health_report", use_container_width=True):
-                st.success("✅ Report generated (Demo)")
+            st.metric("Current", "$8,450", "↓ $320")
         with col2:
-            st.markdown("**💰 Cost Analysis Report**")
-            if st.button("📥 Generate", key="cost_report", use_container_width=True):
-                st.success("✅ Report generated (Demo)")
+            st.metric("Forecast", "$9,200", "↑ $150")
+        with col3:
+            st.metric("Savings", "$1,840/mo")
+        with col4:
+            st.metric("Score", "76%", "↑8%")
+        
+        st.markdown("### 💡 Recommendations")
+        recs = [
+            {"Priority": "🔴", "Title": "Use Spot VMs", "Savings": "$1,200/mo (35%)"},
+            {"Priority": "🟡", "Title": "Right-size Nodes", "Savings": "$450/mo (13%)"}
+        ]
+        for r in recs:
+            with st.expander(f"{r['Priority']} {r['Title']} - {r['Savings']}"):
+                if st.button("✅ Apply", key=f"apply_{r['Title']}", type="primary"):
+                    st.success(f"✅ Applying: {r['Title']}")
     
     @staticmethod
-    def _generate_ai_response(query: str):
-        """Generate AI response"""
+    def _render_performance_analytics(subscription):
+        """Performance analytics"""
+        st.markdown("## 📈 Performance Analytics")
         
-        query_lower = query.lower()
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Response Time", "245ms", "↓35ms")
+        with col2:
+            st.metric("Request Rate", "12.3K/s", "↑2.1K")
+        with col3:
+            st.metric("Error Rate", "0.02%", "↓0.01%")
+        with col4:
+            st.metric("Availability", "99.97%", "↑0.02%")
         
-        if "crash" in query_lower:
-            return """**🔍 CrashLoopBackOff Analysis:**
-Most likely cause: OOMKilled (85% probability)
-
-**Fix:**
-```yaml
-resources:
-  limits:
-    memory: "512Mi"  # Increase from 256Mi
-```
-
-Expected resolution: 30-60 seconds"""
+        st.markdown("### 📊 Resource Utilization")
+        dates = pd.date_range(end=datetime.now(), periods=7, freq='D')
+        util = pd.DataFrame({
+            "Date": dates.strftime('%Y-%m-%d'),
+            "CPU %": [62, 65, 68, 71, 68, 66, 64],
+            "Memory %": [58, 61, 64, 67, 65, 63, 61]
+        })
+        st.dataframe(util, use_container_width=True, hide_index=True)
+    
+    @staticmethod
+    def _render_cicd_integration(subscription):
+        """CI/CD integration"""
+        st.markdown("## 🔗 CI/CD Integration")
         
-        elif "cost" in query_lower:
-            return """**💰 Cost Optimization:**
-
-**Total Savings: $3,812/month**
-
-1. Right-size dev-aks-test: $1,270/mo
-2. Auto-stop dev clusters: $1,200/mo
-3. Use Spot instances: $852/mo
-
-Quick wins available!"""
+        st.markdown("### 🚀 Recent Deployments")
+        deploys = [
+            {"Pipeline": "web-frontend", "Cluster": "aks-prod-eastus", "Status": "✅", "Version": "v2.3.1", "Time": "15m ago"},
+            {"Pipeline": "api-backend", "Cluster": "aks-prod-westus", "Status": "✅", "Version": "v1.8.2", "Time": "1h ago"}
+        ]
+        st.dataframe(pd.DataFrame(deploys), use_container_width=True, hide_index=True)
         
-        return f"AI analysis for: {query}\n\nPlease ask about crashes, costs, security, or performance."
+        st.markdown("### 📦 GitOps Status")
+        gitops = [
+            {"App": "production/web", "Sync": "🟢 Synced", "Health": "Healthy", "Cluster": "aks-prod-eastus"},
+            {"App": "staging/app", "Sync": "🟡 OutOfSync", "Health": "Progressing", "Cluster": "aks-staging"}
+        ]
+        st.dataframe(pd.DataFrame(gitops), use_container_width=True, hide_index=True)
+    
+    @staticmethod
+    def _render_quick_actions(subscription):
+        """Quick actions"""
+        st.markdown("## ⚡ Quick Actions")
+        
+        clusters = ["aks-prod-eastus", "aks-prod-westus", "aks-staging", "aks-dev"]
+        selected = st.selectbox("Select Cluster", clusters)
+        
+        st.markdown("### 🖥️ Node Pool Operations")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.button("➕ Add Node Pool")
+        with col2:
+            st.button("📏 Scale Pool")
+        with col3:
+            st.button("🔄 Upgrade Nodes")
+        
+        st.markdown("### ⎈ Cluster Operations")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.button("⬆️ Upgrade Cluster")
+        with col2:
+            st.button("🔒 Rotate Credentials")
+        with col3:
+            st.button("📊 Run Diagnostics")
 
-# Module-level render function for navigation compatibility
 def render():
-    """Module-level render function"""
-    AzureAKSModule.render()
+    """Module-level render"""
+    AKSManagementModule.render()
