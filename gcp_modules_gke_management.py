@@ -214,3 +214,8 @@ resources:
 3. Autoscaler: $1,040/mo"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    GCPGKEModule.render()

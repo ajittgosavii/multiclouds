@@ -311,3 +311,8 @@ Expected resolution: 30-60 seconds"""
 Quick wins available!"""
         
         return f"AI analysis for: {query}\n\nPlease ask about crashes, costs, security, or performance."
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    AzureAKSModule.render()

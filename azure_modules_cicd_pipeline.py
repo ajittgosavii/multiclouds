@@ -225,3 +225,8 @@ Current: 12min → Target: 7min (5min savings)
 **Total savings: 5 min/build (42% faster)**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    AzureDevOpsPipelinesModule.render()

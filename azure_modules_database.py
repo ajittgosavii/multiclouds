@@ -379,3 +379,8 @@ Risk: None (test environment)
 Monitor and adjust automatically based on load**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    AzureDatabaseModule.render()

@@ -400,3 +400,8 @@ terraform import google_container_cluster.main \\
 **Prevention:** Enable drift detection automation**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    GCPIaCModule.render()

@@ -245,3 +245,8 @@ options:
 **Quick wins available!**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    GCPCloudBuildModule.render()

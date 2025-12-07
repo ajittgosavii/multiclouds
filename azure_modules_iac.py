@@ -397,3 +397,8 @@ identity: {
 **Prevention:** Enable Azure Policy to block manual changes**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    AzureIaCModule.render()

@@ -339,3 +339,8 @@ CREATE INDEX idx_users_email ON users(email);
 **Benefit:** Focus on critical issues**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    AzureMonitorModule.render()

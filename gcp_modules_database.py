@@ -405,3 +405,8 @@ gcloud firestore indexes composite create \\
 - Cost: $320/month savings**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    GCPDatabaseModule.render()

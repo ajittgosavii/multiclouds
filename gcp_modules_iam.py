@@ -356,3 +356,8 @@ gcloud iam service-accounts add-iam-policy-binding SA \\
 - Key management: -234 credentials**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    GCPIAMModule.render()

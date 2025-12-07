@@ -347,3 +347,8 @@ Remove: 34 stale service principals
 - Lower management overhead**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    AzureADModule.render()

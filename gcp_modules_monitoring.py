@@ -332,3 +332,8 @@ ON products USING GIN(to_tsvector('english', name));
 **Benefit:** Focus on critical alerts**"""
         
         return f"AI analysis for: {query}"
+
+# Module-level render function for navigation compatibility
+def render():
+    """Module-level render function"""
+    GCPMonitoringModule.render()
