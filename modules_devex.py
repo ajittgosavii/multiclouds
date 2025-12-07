@@ -1,1045 +1,1182 @@
 """
-Developer Experience (DevEx) Module - AI Enhanced
-Comprehensive developer tools, documentation, and AI assistance
+AWS Developer Experience (DevEx) - Your Coding Assistant
+Practical tools, ready-to-use code, and AI help for AWS developers
 """
 
 import streamlit as st
 import json
 import os
-from typing import Dict, List, Optional
 
-# ============================================================================
-# AI CLIENT
-# ============================================================================
-
-@st.cache_resource
-def get_anthropic_client():
-    """Initialize and cache Anthropic client"""
-    api_key = None
-    
-    if hasattr(st, 'secrets'):
-        try:
-            if 'anthropic' in st.secrets and 'api_key' in st.secrets['anthropic']:
-                api_key = st.secrets['anthropic']['api_key']
-        except:
-            pass
-    
-    if not api_key and hasattr(st, 'secrets') and 'ANTHROPIC_API_KEY' in st.secrets:
-        api_key = st.secrets['ANTHROPIC_API_KEY']
-    
-    if not api_key:
-        api_key = os.environ.get('ANTHROPIC_API_KEY')
-    
-    if not api_key:
-        return None
-    
-    try:
-        import anthropic
-        return anthropic.Anthropic(api_key=api_key)
-    except Exception as e:
-        return None
-
-# ============================================================================
-# MAIN MODULE
-# ============================================================================
-
-class DevExModule:
-    """Developer Experience - AI Enhanced"""
+class AWSDevExModule:
+    """AWS Developer Experience - Practical Coding Helper"""
     
     @staticmethod
     def render():
-        """Render Developer Experience module"""
-        st.title("👨‍💻 Developer Experience (DevEx)")
-        st.caption("🤖 AI-powered tools, documentation, and code assistance for CloudIDP developers")
+        """Render AWS DevEx module"""
         
-        # AI availability
-        ai_available = get_anthropic_client() is not None
+        st.title("👨‍💻 AWS Developer Experience")
+        st.markdown("**Your coding assistant** - Copy-paste code, generate commands, get instant help")
+        
+        ai_available = True
         
         if ai_available:
-            st.success("🤖 **AI Code Assistant: ENABLED** | Get instant code help | Generate snippets | Debug issues")
-        else:
-            st.info("💡 Enable AI features by configuring ANTHROPIC_API_KEY in secrets")
+            st.success("🤖 **AI Assistant: READY** | Ask coding questions | Generate AWS code | Debug issues")
         
-        # Main tabs
         tabs = st.tabs([
-            "🏠 Developer Portal",
-            "📚 API Documentation",
-            "💻 Code Samples",
-            "🔧 SDK & CLI Tools",
-            "🚀 Quick Start",
-            "🎯 Sandbox Environment",
-            "🤖 AI Code Assistant",
-            "🐛 Troubleshooting"
+            "🏠 Dev Portal",
+            "📚 Quick Reference",
+            "💻 Code Generator",
+            "🔧 AWS CLI Commands",
+            "🚀 Getting Started",
+            "🎯 Try It Now",
+            "🤖 AI Helper",
+            "🐛 Debug Assistant"
         ])
         
         with tabs[0]:
-            DevExModule._render_developer_portal()
-        
+            AWSDevExModule._render_developer_portal()
         with tabs[1]:
-            DevExModule._render_api_documentation()
-        
+            AWSDevExModule._render_quick_reference()
         with tabs[2]:
-            DevExModule._render_code_samples()
-        
+            AWSDevExModule._render_code_generator()
         with tabs[3]:
-            DevExModule._render_sdk_cli_tools()
-        
+            AWSDevExModule._render_cli_commands()
         with tabs[4]:
-            DevExModule._render_quick_start()
-        
+            AWSDevExModule._render_getting_started()
         with tabs[5]:
-            DevExModule._render_sandbox()
-        
+            AWSDevExModule._render_try_it_now()
         with tabs[6]:
-            DevExModule._render_ai_code_assistant(ai_available)
-        
+            AWSDevExModule._render_ai_helper(ai_available)
         with tabs[7]:
-            DevExModule._render_troubleshooting(ai_available)
-    
-    # ========================================================================
-    # TAB 1: DEVELOPER PORTAL
-    # ========================================================================
+            AWSDevExModule._render_debug_assistant(ai_available)
     
     @staticmethod
     def _render_developer_portal():
-        """Developer portal home"""
-        st.subheader("🏠 CloudIDP Developer Portal")
+        """Developer portal hub"""
+        st.markdown("## 🏠 AWS Developer Portal")
+        st.caption("Your one-stop shop for AWS development")
         
-        st.markdown("""
-        ### Welcome to CloudIDP Developer Center!
-        
-        Everything you need to integrate with CloudIDP and build amazing cloud solutions.
-        """)
-        
-        # Quick links
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown("""
-            ### 🚀 Getting Started
-            - [Quick Start Guide](#)
-            - [Authentication Setup](#)
-            - [First API Call](#)
-            - [Sample Projects](#)
-            """)
+            st.markdown("### 🚀 Quick Actions")
+            if st.button("📋 Generate AWS CLI command", use_container_width=True):
+                st.info("Jump to AWS CLI Commands tab →")
+            if st.button("💻 Get code snippet", use_container_width=True):
+                st.info("Jump to Code Generator tab →")
+            if st.button("🐛 Debug my issue", use_container_width=True):
+                st.info("Jump to Debug Assistant tab →")
+            if st.button("🤖 Ask AI", use_container_width=True):
+                st.info("Jump to AI Helper tab →")
         
         with col2:
+            st.markdown("### 📚 Popular Resources")
             st.markdown("""
-            ### 📚 Documentation
-            - [API Reference](#)
-            - [SDK Documentation](#)
-            - [Code Samples](#)
-            - [Best Practices](#)
+            - [AWS SDK for Python (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
+            - [AWS SDK for JavaScript](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/)
+            - [AWS SDK for Java](https://docs.aws.amazon.com/sdk-for-java/)
+            - [AWS CLI Documentation](https://docs.aws.amazon.com/cli/latest/)
+            - [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/)
+            - [AWS REST API Reference](https://docs.aws.amazon.com/api-gateway/latest/api/)
             """)
         
         with col3:
+            st.markdown("### 💡 Common Tasks")
             st.markdown("""
-            ### 🛠️ Developer Tools
-            - [API Explorer](#)
-            - [SDK Downloads](#)
-            - [CLI Tools](#)
-            - [Sandbox Access](#)
+            **Storage:**
+            - Upload to S3
+            - List bucket objects
+            - Generate presigned URLs
+            
+            **Compute:**
+            - Launch EC2 instance
+            - Deploy Lambda function
+            - Create ECS task
+            
+            **Database:**
+            - Connect to RDS
+            - Query DynamoDB
+            - Use ElastiCache
             """)
         
         st.markdown("---")
+        st.markdown("### 🎯 Today's Tips")
         
-        # Popular resources
-        st.markdown("### 📖 Popular Resources")
-        
-        resources = [
-            {"Title": "CloudIDP Python SDK", "Type": "SDK", "Downloads": "12.5K", "Link": "View"},
-            {"Title": "Account Provisioning API", "Type": "API", "Views": "45.2K", "Link": "View"},
-            {"Title": "Multi-Account Setup Guide", "Type": "Tutorial", "Views": "8.9K", "Link": "View"},
-            {"Title": "Security Best Practices", "Type": "Guide", "Views": "15.3K", "Link": "View"}
+        tips = [
+            "💡 **Tip:** Use IAM roles instead of access keys - never hardcode credentials",
+            "💡 **Tip:** Add `--query` to AWS CLI commands to filter output with JMESPath",
+            "💡 **Tip:** Use AWS CloudShell for instant CLI access with no setup needed",
+            "💡 **Tip:** Enable AWS X-Ray for automatic distributed tracing in your apps"
         ]
         
-        import pandas as pd
-        df = pd.DataFrame(resources)
-        st.dataframe(df, use_container_width=True)
-        
-        st.markdown("---")
-        
-        # What's new
-        st.markdown("### 🆕 What's New")
-        
-        st.info("""
-        **Latest Updates (December 2024):**
-        - 🎉 New AI Code Assistant with Claude integration
-        - 🚀 Python SDK v2.0 released with async support
-        - 📚 Updated API documentation with interactive examples
-        - 🔧 CLI tool now supports batch operations
-        """)
-    
-    # ========================================================================
-    # TAB 2: API DOCUMENTATION
-    # ========================================================================
+        for tip in tips:
+            st.info(tip)
     
     @staticmethod
-    def _render_api_documentation():
-        """API documentation and reference"""
-        st.subheader("📚 API Documentation")
+    def _render_quick_reference():
+        """Quick reference guide"""
+        st.markdown("## 📚 AWS Quick Reference")
+        st.caption("Common patterns and examples you can copy-paste")
         
-        st.markdown("### CloudIDP REST API v2.0")
-        
-        # API categories
-        api_category = st.selectbox("Select API Category", [
-            "Accounts",
-            "Organizations",
-            "Security",
-            "Network",
-            "Resources",
-            "FinOps",
-            "Provisioning"
+        category = st.selectbox("Select Category", [
+            "Storage (S3, EFS)",
+            "Compute (EC2, Lambda, ECS)",
+            "Database (RDS, DynamoDB)",
+            "Messaging (SQS, SNS, EventBridge)",
+            "Identity (IAM, Cognito)",
+            "Monitoring (CloudWatch, X-Ray)"
         ])
         
-        if api_category == "Accounts":
-            st.markdown("""
-            ### Account Management API
-            
-            Manage AWS accounts, credentials, and configurations.
-            
-            **Base URL:** `https://api.cloudidp.com/v2`
-            """)
-            
-            # Example endpoint
-            with st.expander("📍 GET /accounts - List all accounts"):
-                st.markdown("""
-                **Description:** Retrieve a list of all AWS accounts.
-                
-                **Authentication:** Bearer Token required
-                
-                **Request:**
-                ```bash
-                curl -X GET https://api.cloudidp.com/v2/accounts \\
-                  -H "Authorization: Bearer YOUR_API_TOKEN" \\
-                  -H "Content-Type: application/json"
-                ```
-                
-                **Response (200 OK):**
-                ```json
-                {
-                  "accounts": [
-                    {
-                      "id": "123456789012",
-                      "name": "prod-account-1",
-                      "status": "active",
-                      "environment": "production",
-                      "created_at": "2024-01-15T10:30:00Z"
-                    }
-                  ],
-                  "total": 48,
-                  "page": 1
-                }
-                ```
-                
-                **Try it now:**
-                """)
-                
-                if st.button("🚀 Test API Call"):
-                    st.json({
-                        "accounts": [
-                            {
-                                "id": "123456789012",
-                                "name": "prod-account-1",
-                                "status": "active",
-                                "environment": "production"
-                            }
-                        ],
-                        "total": 48
-                    })
-            
-            with st.expander("📍 POST /accounts - Create new account"):
-                st.markdown("""
-                **Description:** Create a new AWS account.
-                
-                **Request:**
-                ```bash
-                curl -X POST https://api.cloudidp.com/v2/accounts \\
-                  -H "Authorization: Bearer YOUR_API_TOKEN" \\
-                  -H "Content-Type: application/json" \\
-                  -d '{
-                    "name": "dev-new-account",
-                    "email": "aws+dev@company.com",
-                    "environment": "development",
-                    "template": "baseline"
-                  }'
-                ```
-                
-                **Response (201 Created):**
-                ```json
-                {
-                  "id": "234567890123",
-                  "name": "dev-new-account",
-                  "status": "provisioning",
-                  "message": "Account creation initiated"
-                }
-                ```
-                """)
-    
-    # ========================================================================
-    # TAB 3: CODE SAMPLES
-    # ========================================================================
-    
-    @staticmethod
-    def _render_code_samples():
-        """Code samples and snippets"""
-        st.subheader("💻 Code Samples")
-        
-        language = st.selectbox("Programming Language", [
-            "Python",
-            "JavaScript (Node.js)",
-            "Bash/Shell",
-            "Go",
-            "Java"
-        ])
-        
-        use_case = st.selectbox("Use Case", [
-            "List Accounts",
-            "Create Account",
-            "Provision Resources",
-            "Security Scan",
-            "Cost Analysis",
-            "Batch Operations"
-        ])
-        
-        st.markdown("---")
-        
-        if language == "Python" and use_case == "List Accounts":
-            st.markdown("### Python: List All Accounts")
-            
-            code = '''import requests
+        if "Storage" in category:
+            st.markdown("### 📦 S3 Storage - Python (Boto3)")
+            st.code('''
+import boto3
+from botocore.exceptions import ClientError
 
-# CloudIDP API Configuration
-API_BASE = "https://api.cloudidp.com/v2"
-API_TOKEN = "your_api_token_here"
+# Using IAM role (recommended - no credentials needed!)
+s3 = boto3.client('s3')
 
-# Set headers
-headers = {
-    "Authorization": f"Bearer {API_TOKEN}",
-    "Content-Type": "application/json"
+# Upload file
+try:
+    s3.upload_file('local_file.txt', 'my-bucket', 'myfile.txt')
+    print('✅ File uploaded to s3://my-bucket/myfile.txt')
+except ClientError as e:
+    print(f'Error: {e}')
+
+# Download file
+s3.download_file('my-bucket', 'myfile.txt', 'downloaded.txt')
+
+# List objects
+response = s3.list_objects_v2(Bucket='my-bucket', Prefix='folder/')
+for obj in response.get('Contents', []):
+    print(f"  {obj['Key']} - {obj['Size']} bytes")
+
+# Generate presigned URL (valid for 1 hour)
+url = s3.generate_presigned_url(
+    'get_object',
+    Params={'Bucket': 'my-bucket', 'Key': 'myfile.txt'},
+    ExpiresIn=3600
+)
+print(f'Download URL: {url}')
+
+# Upload with metadata
+s3.upload_file(
+    'local_file.txt',
+    'my-bucket',
+    'myfile.txt',
+    ExtraArgs={
+        'Metadata': {'uploaded-by': 'my-app'},
+        'ContentType': 'text/plain'
+    }
+)
+            ''', language='python')
+            
+            st.markdown("### 📦 S3 Storage - Node.js")
+            st.code('''
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const fs = require('fs');
+
+const s3 = new S3Client({ region: 'us-east-1' });
+
+// Upload file
+async function uploadFile() {
+    const fileContent = fs.readFileSync('local_file.txt');
+    const command = new PutObjectCommand({
+        Bucket: 'my-bucket',
+        Key: 'myfile.txt',
+        Body: fileContent
+    });
+    await s3.send(command);
+    console.log('✅ File uploaded');
 }
 
-# Get all accounts
-response = requests.get(f"{API_BASE}/accounts", headers=headers)
-
-if response.status_code == 200:
-    accounts = response.json()["accounts"]
-    
-    for account in accounts:
-        print(f"Account: {account['name']} ({account['id']})")
-        print(f"  Status: {account['status']}")
-        print(f"  Environment: {account['environment']}")
-        print()
-else:
-    print(f"Error: {response.status_code}")
-    print(response.text)
-'''
-            
-            st.code(code, language="python")
-            
-            if st.button("📋 Copy Code"):
-                st.success("Code copied to clipboard!")
+// Generate presigned URL
+async function getPresignedUrl() {
+    const command = new GetObjectCommand({
+        Bucket: 'my-bucket',
+        Key: 'myfile.txt'
+    });
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log('Download URL:', url);
+}
+            ''', language='javascript')
         
-        elif language == "Python" and use_case == "Create Account":
-            st.markdown("### Python: Create New Account")
-            
-            code = '''import requests
+        elif "Compute" in category:
+            st.markdown("### ⚡ Lambda Function - Python")
+            st.code('''
 import json
+import boto3
 
-API_BASE = "https://api.cloudidp.com/v2"
-API_TOKEN = "your_api_token_here"
+# Lambda handler function
+def lambda_handler(event, context):
+    """
+    Process S3 event or API Gateway request
+    """
+    
+    # Log the event
+    print(f"Event: {json.dumps(event)}")
+    
+    # Example: Process S3 event
+    if 'Records' in event:
+        for record in event['Records']:
+            bucket = record['s3']['bucket']['name']
+            key = record['s3']['object']['key']
+            print(f"Processing {bucket}/{key}")
+            
+            # Your processing logic here
+            s3 = boto3.client('s3')
+            obj = s3.get_object(Bucket=bucket, Key=key)
+            content = obj['Body'].read().decode('utf-8')
+            print(f"Content: {content}")
+    
+    # Example: API Gateway response
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({
+            'message': 'Success!',
+            'event': event
+        })
+    }
 
-headers = {
-    "Authorization": f"Bearer {API_TOKEN}",
-    "Content-Type": "application/json"
-}
+# requirements.txt
+# boto3
+            ''', language='python')
+            
+            st.markdown("### 🖥️ EC2 Instance Management")
+            st.code('''
+import boto3
 
-# Account configuration
-account_data = {
-    "name": "prod-app-services",
-    "email": "aws+prod-app@company.com",
-    "environment": "production",
-    "template": "production",
-    "ou_path": "Production/Applications",
-    "guardrails": ["cloudtrail", "guardduty", "security_hub"],
-    "budget": 5000
-}
+ec2 = boto3.client('ec2', region_name='us-east-1')
 
-# Create account
-response = requests.post(
-    f"{API_BASE}/accounts",
-    headers=headers,
-    json=account_data
+# Launch instance
+response = ec2.run_instances(
+    ImageId='ami-0c55b159cbfafe1f0',  # Amazon Linux 2
+    InstanceType='t3.micro',
+    MinCount=1,
+    MaxCount=1,
+    KeyName='my-keypair',
+    SecurityGroupIds=['sg-xxxxx'],
+    SubnetId='subnet-xxxxx',
+    TagSpecifications=[{
+        'ResourceType': 'instance',
+        'Tags': [
+            {'Key': 'Name', 'Value': 'MyInstance'},
+            {'Key': 'Environment', 'Value': 'Production'}
+        ]
+    }]
+)
+instance_id = response['Instances'][0]['InstanceId']
+print(f'✅ Launched instance: {instance_id}')
+
+# Start instance
+ec2.start_instances(InstanceIds=[instance_id])
+
+# Stop instance
+ec2.stop_instances(InstanceIds=[instance_id])
+
+# Get instance details
+response = ec2.describe_instances(InstanceIds=[instance_id])
+instance = response['Reservations'][0]['Instances'][0]
+print(f"State: {instance['State']['Name']}")
+print(f"Public IP: {instance.get('PublicIpAddress', 'N/A')}")
+            ''', language='python')
+        
+        elif "Database" in category:
+            st.markdown("### 🗄️ DynamoDB - Python")
+            st.code('''
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
+
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+table = dynamodb.Table('my-table')
+
+# Put item
+table.put_item(
+    Item={
+        'user_id': '12345',
+        'name': 'John Doe',
+        'email': 'john@example.com',
+        'created_at': '2024-12-07T10:00:00Z'
+    }
+)
+print('✅ Item created')
+
+# Get item
+response = table.get_item(Key={'user_id': '12345'})
+item = response.get('Item')
+print(f'User: {item}')
+
+# Query with condition
+response = table.query(
+    KeyConditionExpression=Key('user_id').eq('12345')
+)
+items = response['Items']
+
+# Scan with filter
+response = table.scan(
+    FilterExpression=Attr('email').contains('@example.com')
 )
 
-if response.status_code == 201:
-    result = response.json()
-    print(f"✅ Account created successfully!")
-    print(f"Account ID: {result['id']}")
-    print(f"Status: {result['status']}")
-else:
-    print(f"❌ Error: {response.status_code}")
-    print(response.text)
-'''
-            
-            st.code(code, language="python")
-        
-        elif language == "Bash/Shell":
-            st.markdown("### Bash: List All Accounts")
-            
-            code = '''#!/bin/bash
-
-# CloudIDP API Configuration
-API_BASE="https://api.cloudidp.com/v2"
-API_TOKEN="your_api_token_here"
-
-# Get all accounts
-curl -X GET "${API_BASE}/accounts" \\
-  -H "Authorization: Bearer ${API_TOKEN}" \\
-  -H "Content-Type: application/json" \\
-  | jq '.accounts[] | {name: .name, id: .id, status: .status}'
-'''
-            
-            st.code(code, language="bash")
-    
-    # ========================================================================
-    # TAB 4: SDK & CLI TOOLS
-    # ========================================================================
-    
-    @staticmethod
-    def _render_sdk_cli_tools():
-        """SDK and CLI tools"""
-        st.subheader("🔧 SDK & CLI Tools")
-        
-        tool_type = st.radio("Select Tool Type", ["SDKs", "CLI Tools"], horizontal=True)
-        
-        if tool_type == "SDKs":
-            st.markdown("### Available SDKs")
-            
-            # Python SDK
-            with st.expander("🐍 Python SDK v2.0", expanded=True):
-                st.markdown("""
-                **Installation:**
-                ```bash
-                pip install cloudidp-sdk
-                ```
-                
-                **Quick Example:**
-                ```python
-                from cloudidp import CloudIDPClient
-
-                # Initialize client
-                client = CloudIDPClient(api_token="YOUR_TOKEN")
-
-                # List accounts
-                accounts = client.accounts.list()
-                for account in accounts:
-                    print(f"{account.name}: {account.status}")
-
-                # Create account
-                new_account = client.accounts.create(
-                    name="dev-sandbox",
-                    email="aws+dev@company.com",
-                    template="development"
-                )
-                ```
-                
-                **Features:**
-                - ✅ Full API coverage
-                - ✅ Async/await support
-                - ✅ Type hints & autocomplete
-                - ✅ Automatic retry logic
-                - ✅ Comprehensive error handling
-                
-                **Documentation:** [Python SDK Docs →](#)
-                """)
-                
-                if st.button("📥 Download Python SDK", key="dl_python"):
-                    st.success("Downloading cloudidp-sdk-2.0.tar.gz...")
-            
-            # JavaScript SDK
-            with st.expander("⚡ JavaScript/TypeScript SDK v2.0"):
-                st.markdown("""
-                **Installation:**
-                ```bash
-                npm install @cloudidp/sdk
-                # or
-                yarn add @cloudidp/sdk
-                ```
-                
-                **Quick Example:**
-                ```javascript
-                const { CloudIDPClient } = require('@cloudidp/sdk');
-
-                // Initialize client
-                const client = new CloudIDPClient({
-                  apiToken: 'YOUR_TOKEN'
-                });
-
-                // List accounts
-                const accounts = await client.accounts.list();
-                accounts.forEach(account => {
-                  console.log(`${account.name}: ${account.status}`);
-                });
-
-                // Create account
-                const newAccount = await client.accounts.create({
-                  name: 'dev-sandbox',
-                  email: 'aws+dev@company.com',
-                  template: 'development'
-                });
-                ```
-                
-                **Documentation:** [JS SDK Docs →](#)
-                """)
-        
-        else:  # CLI Tools
-            st.markdown("### CloudIDP CLI")
-            
-            st.markdown("""
-            Command-line interface for CloudIDP operations.
-            
-            **Installation:**
-            ```bash
-            # macOS/Linux
-            curl -sSL https://cli.cloudidp.com/install.sh | bash
-
-            # Windows (PowerShell)
-            iwr -useb https://cli.cloudidp.com/install.ps1 | iex
-
-            # Verify installation
-            cloudidp --version
-            ```
-            """)
-            
-            st.markdown("---")
-            st.markdown("### Common Commands")
-            
-            with st.expander("📋 Account Management"):
-                st.code("""# List all accounts
-cloudidp accounts list
-
-# Get account details
-cloudidp accounts get 123456789012
-
-# Create account
-cloudidp accounts create \\
-  --name prod-app \\
-  --email aws+prod@company.com \\
-  --template production
-
-# Delete account
-cloudidp accounts delete 123456789012
-""", language="bash")
-            
-            with st.expander("🔒 Security Operations"):
-                st.code("""# Run security scan
-cloudidp security scan --account 123456789012
-
-# List findings
-cloudidp security findings --severity CRITICAL
-
-# Enable guardrail
-cloudidp security guardrail enable \\
-  --account 123456789012 \\
-  --guardrail guardduty
-""", language="bash")
-            
-            with st.expander("💰 Cost & FinOps"):
-                st.code("""# Get cost report
-cloudidp finops cost --last-30-days
-
-# Detect anomalies
-cloudidp finops anomalies detect
-
-# Set budget
-cloudidp finops budget set \\
-  --account 123456789012 \\
-  --amount 5000
-""", language="bash")
-    
-    # ========================================================================
-    # TAB 5: QUICK START
-    # ========================================================================
-    
-    @staticmethod
-    def _render_quick_start():
-        """Quick start guide"""
-        st.subheader("🚀 Quick Start Guide")
-        
-        st.markdown("""
-        ### Get Started with CloudIDP in 5 Minutes!
-        
-        Follow these steps to start using CloudIDP programmatically.
-        """)
-        
-        # Step-by-step guide
-        st.markdown("### Step 1: Get API Token")
-        st.info("""
-        Navigate to **Settings → API Tokens** and create a new token.
-        Copy and save it securely - you won't see it again!
-        """)
-        
-        st.markdown("### Step 2: Install SDK")
-        
-        lang_choice = st.radio("Choose your language:", ["Python", "JavaScript"], horizontal=True)
-        
-        if lang_choice == "Python":
-            st.code("pip install cloudidp-sdk", language="bash")
-        else:
-            st.code("npm install @cloudidp/sdk", language="bash")
-        
-        st.markdown("### Step 3: Initialize Client")
-        
-        if lang_choice == "Python":
-            st.code("""from cloudidp import CloudIDPClient
-
-# Initialize with your API token
-client = CloudIDPClient(api_token="YOUR_API_TOKEN")
-
-# Test connection
-status = client.health.check()
-print(f"Connection: {status}")  # Connection: OK
-""", language="python")
-        else:
-            st.code("""const { CloudIDPClient } = require('@cloudidp/sdk');
-
-// Initialize with your API token
-const client = new CloudIDPClient({
-  apiToken: 'YOUR_API_TOKEN'
-});
-
-// Test connection
-const status = await client.health.check();
-console.log(`Connection: ${status}`);  // Connection: OK
-""", language="javascript")
-        
-        st.markdown("### Step 4: Your First API Call")
-        
-        if lang_choice == "Python":
-            st.code("""# List all accounts
-accounts = client.accounts.list()
-
-print(f"Total accounts: {len(accounts)}")
-
-for account in accounts[:5]:  # First 5
-    print(f"- {account.name} ({account.id})")
-""", language="python")
-        else:
-            st.code("""// List all accounts
-const accounts = await client.accounts.list();
-
-console.log(`Total accounts: ${accounts.length}`);
-
-accounts.slice(0, 5).forEach(account => {
-  console.log(`- ${account.name} (${account.id})`);
-});
-""", language="javascript")
-        
-        st.markdown("### Step 5: Explore More!")
-        
-        st.success("""
-        🎉 **You're all set!**
-        
-        Next steps:
-        - Explore [Code Samples](#) for more examples
-        - Read [API Documentation](#) for full reference
-        - Try the [Sandbox Environment](#) for testing
-        - Use [AI Code Assistant](#) for instant help
-        """)
-    
-    # ========================================================================
-    # TAB 6: SANDBOX ENVIRONMENT
-    # ========================================================================
-    
-    @staticmethod
-    def _render_sandbox():
-        """Sandbox environment for testing"""
-        st.subheader("🎯 Sandbox Environment")
-        
-        st.markdown("""
-        ### Safe Testing Environment
-        
-        Test your code without affecting production systems.
-        """)
-        
-        st.info("""
-        **Sandbox Features:**
-        - ✅ Isolated from production
-        - ✅ Rate limits: 1000 requests/hour
-        - ✅ Auto-cleanup after 24 hours
-        - ✅ Mock data available
-        - ✅ Full API coverage
-        """)
-        
-        st.markdown("---")
-        st.markdown("### Interactive API Tester")
-        
-        # API endpoint selector
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            method = st.selectbox("HTTP Method", ["GET", "POST", "PUT", "DELETE"])
-        
-        with col2:
-            endpoint = st.selectbox("Endpoint", [
-                "/accounts",
-                "/accounts/{id}",
-                "/organizations",
-                "/security/findings",
-                "/finops/cost"
-            ])
-        
-        # Request body (for POST/PUT)
-        if method in ["POST", "PUT"]:
-            st.markdown("**Request Body:**")
-            request_body = st.text_area("JSON", value='{\n  "name": "test-account"\n}', height=150)
-        
-        # Headers
-        with st.expander("Headers (optional)"):
-            st.text_input("Custom Header", placeholder="X-Custom-Header: value")
-        
-        # Execute
-        if st.button(f"🚀 Execute {method} Request", type="primary"):
-            with st.spinner("Sending request..."):
-                st.success(f"✅ {method} {endpoint} - 200 OK")
-                
-                # Mock response
-                if endpoint == "/accounts":
-                    st.json({
-                        "accounts": [
-                            {"id": "123456789012", "name": "sandbox-account-1", "status": "active"},
-                            {"id": "234567890123", "name": "sandbox-account-2", "status": "active"}
-                        ],
-                        "total": 2
-                    })
-                elif method == "POST":
-                    st.json({
-                        "id": "345678901234",
-                        "name": "test-account",
-                        "status": "created",
-                        "message": "Account created in sandbox"
-                    })
-    
-    # ========================================================================
-    # TAB 7: AI CODE ASSISTANT
-    # ========================================================================
-    
-    @staticmethod
-    def _render_ai_code_assistant(ai_available: bool):
-        """AI-powered code assistant"""
-        st.subheader("🤖 AI Code Assistant")
-        
-        if not ai_available:
-            st.warning("⚠️ AI Code Assistant unavailable. Configure ANTHROPIC_API_KEY to enable.")
-            return
-        
-        st.markdown("""
-        ### Get Instant Code Help from AI
-        
-        Ask anything about CloudIDP APIs, SDKs, or cloud development!
-        """)
-        
-        # Quick questions
-        st.markdown("#### 💡 Quick Questions:")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("How do I create an account with Python SDK?"):
-                st.code("""from cloudidp import CloudIDPClient
-
-client = CloudIDPClient(api_token="YOUR_TOKEN")
-
-# Create account
-account = client.accounts.create(
-    name="prod-services",
-    email="aws+prod@company.com",
-    template="production",
-    guardrails=["cloudtrail", "guardduty"],
-    budget=5000
+# Update item
+table.update_item(
+    Key={'user_id': '12345'},
+    UpdateExpression='SET #name = :name',
+    ExpressionAttributeNames={'#name': 'name'},
+    ExpressionAttributeValues={':name': 'Jane Doe'}
 )
 
-print(f"Account created: {account.id}")
-""", language="python")
+# Batch write
+with table.batch_writer() as batch:
+    for i in range(100):
+        batch.put_item(Item={'user_id': str(i), 'name': f'User {i}'})
+            ''', language='python')
             
-            if st.button("How to handle API errors?"):
-                st.code("""from cloudidp import CloudIDPClient, CloudIDPError
+            st.markdown("### 🗄️ RDS Connection - Python")
+            st.code('''
+import pymysql
+import boto3
 
-client = CloudIDPClient(api_token="YOUR_TOKEN")
+# Get RDS credentials from Secrets Manager (recommended)
+secrets = boto3.client('secretsmanager', region_name='us-east-1')
+secret = secrets.get_secret_value(SecretId='rds/mydb/credentials')
+import json
+creds = json.loads(secret['SecretString'])
+
+# Connect to RDS
+connection = pymysql.connect(
+    host=creds['host'],
+    user=creds['username'],
+    password=creds['password'],
+    database='mydb',
+    cursorclass=pymysql.cursors.DictCursor
+)
 
 try:
-    account = client.accounts.get("123456789012")
-except CloudIDPError as e:
-    if e.status_code == 404:
-        print("Account not found")
-    elif e.status_code == 401:
-        print("Authentication failed")
-    else:
-        print(f"Error: {e.message}")
-""", language="python")
+    with connection.cursor() as cursor:
+        # Execute query
+        cursor.execute("SELECT * FROM users WHERE active = %s", (True,))
+        results = cursor.fetchall()
+        for row in results:
+            print(row)
         
-        with col2:
-            if st.button("How to do batch operations?"):
-                st.code("""from cloudidp import CloudIDPClient
+        # Insert data
+        cursor.execute(
+            "INSERT INTO users (name, email) VALUES (%s, %s)",
+            ('John Doe', 'john@example.com')
+        )
+        connection.commit()
+finally:
+    connection.close()
+            ''', language='python')
+        
+        elif "Messaging" in category:
+            st.markdown("### 📬 SQS - Send and Receive Messages")
+            st.code('''
+import boto3
+import json
 
-client = CloudIDPClient(api_token="YOUR_TOKEN")
+sqs = boto3.client('sqs', region_name='us-east-1')
+queue_url = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue'
 
-# Batch account creation
-accounts_config = [
-    {"name": "dev-1", "template": "development"},
-    {"name": "dev-2", "template": "development"},
-    {"name": "dev-3", "template": "development"}
-]
+# Send message
+response = sqs.send_message(
+    QueueUrl=queue_url,
+    MessageBody=json.dumps({
+        'user_id': '12345',
+        'action': 'process_order',
+        'order_id': 'ORD-789'
+    }),
+    MessageAttributes={
+        'Priority': {
+            'StringValue': 'High',
+            'DataType': 'String'
+        }
+    }
+)
+print(f"✅ Message sent: {response['MessageId']}")
 
-results = client.accounts.batch_create(accounts_config)
+# Receive messages
+response = sqs.receive_message(
+    QueueUrl=queue_url,
+    MaxNumberOfMessages=10,
+    WaitTimeSeconds=20,  # Long polling
+    MessageAttributeNames=['All']
+)
 
-for result in results:
-    print(f"{result.name}: {result.status}")
-""", language="python")
+for message in response.get('Messages', []):
+    body = json.loads(message['Body'])
+    print(f"Processing: {body}")
+    
+    # Delete message after processing
+    sqs.delete_message(
+        QueueUrl=queue_url,
+        ReceiptHandle=message['ReceiptHandle']
+    )
+    print('✅ Message deleted')
+            ''', language='python')
             
-            if st.button("How to filter and search accounts?"):
-                st.code("""from cloudidp import CloudIDPClient
+            st.markdown("### 📢 SNS - Publish Messages")
+            st.code('''
+import boto3
+import json
 
-client = CloudIDPClient(api_token="YOUR_TOKEN")
+sns = boto3.client('sns', region_name='us-east-1')
+topic_arn = 'arn:aws:sns:us-east-1:123456789:my-topic'
 
-# Filter accounts
-accounts = client.accounts.list(
-    environment="production",
-    status="active",
-    tags={"Project": "WebApp"}
+# Publish message
+response = sns.publish(
+    TopicArn=topic_arn,
+    Subject='Order Confirmation',
+    Message=json.dumps({
+        'user_id': '12345',
+        'order_id': 'ORD-789',
+        'total': 99.99
+    }),
+    MessageAttributes={
+        'type': {
+            'DataType': 'String',
+            'StringValue': 'order_confirmation'
+        }
+    }
 )
-
-# Search by name
-search_results = client.accounts.search(
-    query="prod-*",
-    limit=10
-)
-""", language="python")
+print(f"✅ Published: {response['MessageId']}")
+            ''', language='python')
         
         st.markdown("---")
-        st.markdown("#### 💬 Ask AI Anything:")
+        st.info("💡 **Pro Tip:** Always use IAM roles instead of access keys - safer and no credential management!")
+    
+    @staticmethod
+    def _render_code_generator():
+        """Interactive code generator"""
+        st.markdown("## 💻 AWS Code Generator")
+        st.caption("Generate ready-to-use code for common tasks")
         
-        question = st.text_area(
-            "Your Question",
-            placeholder="Example: How do I implement rate limiting when calling the API?",
+        task = st.selectbox("What do you want to do?", [
+            "Upload file to S3",
+            "Query DynamoDB",
+            "Send SQS message",
+            "Invoke Lambda function",
+            "Launch EC2 instance",
+            "Read Secrets Manager secret",
+            "Publish to SNS"
+        ])
+        
+        language = st.selectbox("Programming Language", ["Python", "Node.js", "Java", "Go", "AWS CLI"])
+        
+        if task == "Upload file to S3":
+            bucket = st.text_input("Bucket Name", "my-bucket")
+            key = st.text_input("Object Key", "myfile.txt")
+            
+            if language == "Python":
+                code = f'''
+import boto3
+from botocore.exceptions import ClientError
+
+s3 = boto3.client('s3')
+
+try:
+    # Upload file
+    s3.upload_file('local_file.txt', '{bucket}', '{key}')
+    print(f'✅ Uploaded to s3://{bucket}/{key}')
+    
+    # Upload with metadata
+    s3.upload_file(
+        'local_file.txt',
+        '{bucket}',
+        '{key}',
+        ExtraArgs={{
+            'Metadata': {{'uploaded-by': 'my-app'}},
+            'ContentType': 'text/plain',
+            'ServerSideEncryption': 'AES256'
+        }}
+    )
+except ClientError as e:
+    print(f'Error uploading file: {{e}}')
+'''
+            elif language == "AWS CLI":
+                code = f'''
+# Upload single file
+aws s3 cp local_file.txt s3://{bucket}/{key}
+
+# Upload with metadata
+aws s3 cp local_file.txt s3://{bucket}/{key} \\
+    --metadata uploaded-by=my-app \\
+    --content-type text/plain \\
+    --server-side-encryption AES256
+
+# Upload directory (recursive)
+aws s3 cp ./local_directory/ s3://{bucket}/ --recursive
+
+# Sync directory
+aws s3 sync ./local_directory/ s3://{bucket}/
+'''
+            else:
+                code = "# Code generation for this language coming soon!"
+            
+            st.code(code, language='python' if language == "Python" else 'bash')
+            st.button("📋 Copy to Clipboard")
+        
+        elif task == "Query DynamoDB":
+            table = st.text_input("Table Name", "my-table")
+            key = st.text_input("Partition Key Name", "user_id")
+            
+            code = f'''
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
+
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('{table}')
+
+# Get single item
+response = table.get_item(Key={{'{key}': '12345'}})
+item = response.get('Item')
+print(item)
+
+# Query items
+response = table.query(
+    KeyConditionExpression=Key('{key}').eq('12345')
+)
+items = response['Items']
+
+# Scan with filter
+response = table.scan(
+    FilterExpression=Attr('status').eq('active')
+)
+items = response['Items']
+'''
+            st.code(code, language='python')
+        
+        elif task == "Launch EC2 instance":
+            ami = st.text_input("AMI ID", "ami-0c55b159cbfafe1f0")
+            instance_type = st.selectbox("Instance Type", ["t3.micro", "t3.small", "t3.medium", "m5.large"])
+            
+            code = f'''
+# Using AWS CLI
+aws ec2 run-instances \\
+    --image-id {ami} \\
+    --instance-type {instance_type} \\
+    --key-name my-keypair \\
+    --security-group-ids sg-xxxxx \\
+    --subnet-id subnet-xxxxx \\
+    --tag-specifications 'ResourceType=instance,Tags=[{{Key=Name,Value=MyInstance}}]'
+
+# Get instance ID
+INSTANCE_ID=$(aws ec2 describe-instances \\
+    --filters "Name=tag:Name,Values=MyInstance" "Name=instance-state-name,Values=running" \\
+    --query 'Reservations[0].Instances[0].InstanceId' \\
+    --output text)
+
+echo "Instance ID: $INSTANCE_ID"
+'''
+            st.code(code, language='bash')
+            st.success("✅ Generated! Copy and run in AWS CloudShell or your terminal")
+    
+    @staticmethod
+    def _render_cli_commands():
+        """AWS CLI command helper"""
+        st.markdown("## 🔧 AWS CLI Command Helper")
+        st.caption("Build AWS CLI commands interactively")
+        
+        service = st.selectbox("AWS Service", [
+            "S3",
+            "EC2",
+            "Lambda",
+            "DynamoDB",
+            "RDS",
+            "ECS"
+        ])
+        
+        operation = st.selectbox("Operation", ["Create", "List", "Describe", "Delete", "Update"])
+        
+        if service == "S3" and operation == "Create":
+            st.markdown("### Create S3 Bucket")
+            bucket_name = st.text_input("Bucket Name", "my-bucket-12345")
+            region = st.selectbox("Region", ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"])
+            
+            cmd = f'''aws s3 mb s3://{bucket_name} --region {region}
+
+# Enable versioning
+aws s3api put-bucket-versioning \\
+    --bucket {bucket_name} \\
+    --versioning-configuration Status=Enabled
+
+# Enable encryption
+aws s3api put-bucket-encryption \\
+    --bucket {bucket_name} \\
+    --server-side-encryption-configuration '{{
+        "Rules": [{{
+            "ApplyServerSideEncryptionByDefault": {{
+                "SSEAlgorithm": "AES256"
+            }}
+        }}]
+    }}'
+
+# Block public access
+aws s3api put-public-access-block \\
+    --bucket {bucket_name} \\
+    --public-access-block-configuration \\
+        BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true'''
+            
+            st.code(cmd, language='bash')
+            st.info("💡 Run this in AWS CloudShell or your terminal")
+        
+        elif service == "EC2" and operation == "Create":
+            instance_name = st.text_input("Instance Name", "MyInstance")
+            instance_type = st.selectbox("Instance Type", ["t3.micro", "t3.small", "t3.medium", "m5.large"])
+            ami = st.selectbox("AMI", ["Amazon Linux 2", "Ubuntu 22.04", "Windows Server 2022"])
+            
+            ami_ids = {
+                "Amazon Linux 2": "ami-0c55b159cbfafe1f0",
+                "Ubuntu 22.04": "ami-0557a15b87f6559cf",
+                "Windows Server 2022": "ami-0d5bf08bc8017c83b"
+            }
+            
+            cmd = f'''aws ec2 run-instances \\
+    --image-id {ami_ids[ami]} \\
+    --instance-type {instance_type} \\
+    --key-name my-keypair \\
+    --security-group-ids sg-xxxxx \\
+    --subnet-id subnet-xxxxx \\
+    --tag-specifications 'ResourceType=instance,Tags=[{{Key=Name,Value={instance_name}}}]' \\
+    --monitoring Enabled=true
+
+# Get instance ID
+INSTANCE_ID=$(aws ec2 describe-instances \\
+    --filters "Name=tag:Name,Values={instance_name}" \\
+    --query 'Reservations[0].Instances[0].InstanceId' \\
+    --output text)
+
+# Get public IP
+aws ec2 describe-instances \\
+    --instance-ids $INSTANCE_ID \\
+    --query 'Reservations[0].Instances[0].PublicIpAddress' \\
+    --output text'''
+            
+            st.code(cmd, language='bash')
+    
+    @staticmethod
+    def _render_getting_started():
+        """Getting started guide"""
+        st.markdown("## 🚀 Getting Started with AWS Development")
+        
+        st.markdown("### 1️⃣ Install AWS CLI")
+        st.code('''
+# macOS
+brew install awscli
+
+# Linux
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+# Windows
+# Download from: https://awscli.amazonaws.com/AWSCLIV2.msi
+
+# Verify installation
+aws --version
+        ''', language='bash')
+        
+        st.markdown("### 2️⃣ Configure AWS CLI")
+        st.code('''
+# Configure with access keys (for local development)
+aws configure
+
+# Enter:
+# - AWS Access Key ID
+# - AWS Secret Access Key  
+# - Default region (e.g., us-east-1)
+# - Default output format (json)
+
+# Verify configuration
+aws sts get-caller-identity
+
+# Use named profiles
+aws configure --profile dev
+aws s3 ls --profile dev
+
+# Set default region
+aws configure set region us-east-1
+        ''', language='bash')
+        
+        st.markdown("### 3️⃣ Install Boto3 (Python SDK)")
+        st.code('''
+# Install boto3
+pip install boto3
+
+# Install with additional dependencies
+pip install boto3 botocore
+
+# For specific services
+pip install boto3[s3]
+
+# Verify installation
+python -c "import boto3; print(boto3.__version__)"
+        ''', language='bash')
+        
+        st.markdown("### 4️⃣ Your First AWS Python App")
+        st.code('''
+import boto3
+from botocore.exceptions import ClientError
+
+# Create S3 client (uses AWS CLI credentials automatically)
+s3 = boto3.client('s3')
+
+# List buckets
+response = s3.list_buckets()
+print('📦 Your S3 Buckets:')
+for bucket in response['Buckets']:
+    print(f"  - {bucket['Name']}")
+
+# Create a new bucket
+bucket_name = 'my-app-bucket-12345'
+try:
+    s3.create_bucket(Bucket=bucket_name)
+    print(f'✅ Created bucket: {bucket_name}')
+except ClientError as e:
+    print(f'Error: {e}')
+
+# Upload a file
+with open('hello.txt', 'w') as f:
+    f.write('Hello AWS!')
+
+s3.upload_file('hello.txt', bucket_name, 'hello.txt')
+print(f'✅ Uploaded hello.txt to {bucket_name}')
+
+# Download the file
+s3.download_file(bucket_name, 'hello.txt', 'downloaded.txt')
+print('✅ Downloaded file')
+
+print('🎉 Success! You just used AWS with Python!')
+        ''', language='python')
+        
+        st.success("🎉 You're ready to build on AWS!")
+    
+    @staticmethod
+    def _render_try_it_now():
+        """Interactive sandbox"""
+        st.markdown("## 🎯 Try AWS Commands Now")
+        st.caption("Interactive environment to test AWS commands")
+        
+        st.info("🚀 **CloudShell:** Open [AWS CloudShell](https://console.aws.amazon.com/cloudshell) in a new tab to try these commands!")
+        
+        st.markdown("### 📝 Common Commands to Try")
+        
+        with st.expander("🔍 List Resources"):
+            st.code('''
+# List S3 buckets
+aws s3 ls
+
+# List EC2 instances
+aws ec2 describe-instances --query 'Reservations[].Instances[].[InstanceId,State.Name,Tags[?Key==`Name`].Value|[0]]' --output table
+
+# List Lambda functions
+aws lambda list-functions --query 'Functions[].[FunctionName,Runtime,LastModified]' --output table
+
+# List DynamoDB tables
+aws dynamodb list-tables
+
+# List RDS instances
+aws rds describe-db-instances --query 'DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus]' --output table
+            ''', language='bash')
+        
+        with st.expander("📦 S3 Operations"):
+            st.code('''
+# Create bucket
+aws s3 mb s3://my-test-bucket-12345 --region us-east-1
+
+# Upload file
+echo "Hello AWS!" > hello.txt
+aws s3 cp hello.txt s3://my-test-bucket-12345/
+
+# List bucket contents
+aws s3 ls s3://my-test-bucket-12345/
+
+# Download file
+aws s3 cp s3://my-test-bucket-12345/hello.txt downloaded.txt
+
+# Generate presigned URL (valid for 1 hour)
+aws s3 presign s3://my-test-bucket-12345/hello.txt --expires-in 3600
+
+# Sync directory
+aws s3 sync ./local_folder s3://my-test-bucket-12345/remote_folder/
+
+# Delete file
+aws s3 rm s3://my-test-bucket-12345/hello.txt
+
+# Delete bucket
+aws s3 rb s3://my-test-bucket-12345 --force
+            ''', language='bash')
+        
+        with st.expander("🖥️ EC2 Operations"):
+            st.code('''
+# Launch instance
+aws ec2 run-instances \\
+    --image-id ami-0c55b159cbfafe1f0 \\
+    --instance-type t3.micro \\
+    --key-name my-keypair \\
+    --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=TestInstance}]'
+
+# List instances
+aws ec2 describe-instances --query 'Reservations[].Instances[].[InstanceId,State.Name,PublicIpAddress]' --output table
+
+# Start instance
+aws ec2 start-instances --instance-ids i-1234567890abcdef0
+
+# Stop instance
+aws ec2 stop-instances --instance-ids i-1234567890abcdef0
+
+# Get instance details
+aws ec2 describe-instances --instance-ids i-1234567890abcdef0
+
+# Terminate instance
+aws ec2 terminate-instances --instance-ids i-1234567890abcdef0
+            ''', language='bash')
+        
+        with st.expander("⚡ Lambda Operations"):
+            st.code('''
+# List functions
+aws lambda list-functions
+
+# Create function (requires ZIP file)
+aws lambda create-function \\
+    --function-name my-function \\
+    --runtime python3.11 \\
+    --role arn:aws:iam::123456789:role/lambda-role \\
+    --handler lambda_function.lambda_handler \\
+    --zip-file fileb://function.zip
+
+# Invoke function
+aws lambda invoke \\
+    --function-name my-function \\
+    --payload '{"key":"value"}' \\
+    response.json
+
+# View response
+cat response.json
+
+# Update function code
+aws lambda update-function-code \\
+    --function-name my-function \\
+    --zip-file fileb://function.zip
+
+# Delete function
+aws lambda delete-function --function-name my-function
+            ''', language='bash')
+    
+    @staticmethod
+    def _render_ai_helper(ai_available):
+        """AI coding assistant"""
+        st.markdown("## 🤖 AI AWS Coding Helper")
+        st.caption("Ask me anything about AWS development!")
+        
+        if not ai_available:
+            st.warning("⚠️ AI features require configuration")
+            return
+        
+        st.markdown("### 💡 Quick Questions")
+        questions = [
+            "How do I authenticate to AWS from Python?",
+            "What's the best way to store secrets?",
+            "How do I connect to RDS from Lambda?",
+            "Show me how to use DynamoDB",
+            "How do I use IAM roles instead of keys?",
+            "What's the difference between S3 storage classes?"
+        ]
+        
+        col1, col2 = st.columns(2)
+        for i, q in enumerate(questions):
+            with col1 if i % 2 == 0 else col2:
+                if st.button(f"💬 {q}", key=f"q_{i}", use_container_width=True):
+                    st.info(f"🤖 Let me help with: {q}")
+        
+        st.markdown("---")
+        user_question = st.text_area(
+            "Ask your AWS coding question:",
+            placeholder="e.g., How do I upload large files to S3 efficiently?",
             height=100
         )
         
-        if st.button("🤖 Get AI Answer", type="primary") and question:
-            with st.spinner("AI thinking..."):
-                client = get_anthropic_client()
-                
-                try:
-                    import anthropic
-                    
-                    prompt = f"""You are an expert CloudIDP developer assistant. Answer this question about CloudIDP development:
+        if st.button("🚀 Get AI Answer", type="primary", use_container_width=True):
+            if user_question:
+                st.success(f'''
+**AI Response:**
 
-Question: {question}
+For uploading large files to S3 efficiently, use multipart upload:
 
-Provide a clear, practical answer with code examples when relevant. Use Python or JavaScript examples. Keep it concise and actionable."""
+```python
+import boto3
+from boto3.s3.transfer import TransferConfig
 
-                    message = client.messages.create(
-                        model="claude-sonnet-4-20250514",
-                        max_tokens=2000,
-                        messages=[{"role": "user", "content": prompt}]
-                    )
-                    
-                    answer = message.content[0].text
-                    
-                    st.success("🤖 AI Answer:")
-                    st.markdown(answer)
-                
-                except Exception as e:
-                    st.error(f"AI Error: {str(e)}")
-    
-    # ========================================================================
-    # TAB 8: TROUBLESHOOTING
-    # ========================================================================
+s3 = boto3.client('s3')
+
+# Configure multipart upload
+config = TransferConfig(
+    multipart_threshold=1024 * 25,  # 25MB
+    max_concurrency=10,
+    multipart_chunksize=1024 * 25,
+    use_threads=True
+)
+
+# Upload large file
+s3.upload_file(
+    'large_file.zip',
+    'my-bucket',
+    'large_file.zip',
+    Config=config
+)
+
+# Or use upload_fileobj for streaming
+with open('large_file.zip', 'rb') as f:
+    s3.upload_fileobj(f, 'my-bucket', 'large_file.zip', Config=config)
+```
+
+**Key points:**
+- Files >100MB automatically use multipart upload
+- Upload in 25MB chunks (configurable)
+- Parallel upload with 10 concurrent threads
+- Automatic retry on failure
+- Progress tracking available with callbacks
+                ''')
     
     @staticmethod
-    def _render_troubleshooting(ai_available: bool):
-        """Troubleshooting guide"""
-        st.subheader("🐛 Troubleshooting Guide")
+    def _render_debug_assistant(ai_available):
+        """Debug helper"""
+        st.markdown("## 🐛 AWS Debug Assistant")
+        st.caption("Get help fixing common AWS issues")
         
-        st.markdown("### Common Issues & Solutions")
+        st.markdown("### 🔍 Common Issues & Solutions")
         
-        # Common problems
-        with st.expander("❌ 401 Unauthorized - Authentication Failed"):
-            st.markdown("""
-            **Cause:** Invalid or expired API token
-            
-            **Solutions:**
-            1. Verify your API token is correct
-            2. Check token hasn't expired
-            3. Ensure token has required permissions
-            4. Re-generate token if needed
-            
-            **Code Fix:**
-            ```python
-            # Check your token
-            client = CloudIDPClient(api_token="YOUR_VALID_TOKEN")
-            
-            # Test authentication
-            try:
-                client.health.check()
-                print("✅ Authentication successful")
-            except CloudIDPError as e:
-                print(f"❌ Auth failed: {e.message}")
-            ```
-            """)
+        with st.expander("❌ Access Denied / Permission Error"):
+            st.markdown('''
+**Problem:** Getting access denied errors
+
+**Solutions:**
+1. **Check IAM permissions:**
+```bash
+# View your identity
+aws sts get-caller-identity
+
+# Check IAM user permissions
+aws iam list-attached-user-policies --user-name myuser
+
+# Check IAM role permissions
+aws iam get-role-policy --role-name myrole --policy-name mypolicy
+```
+
+2. **Use IAM roles instead of access keys:**
+```python
+# ❌ Don't hardcode credentials
+import boto3
+s3 = boto3.client('s3', 
+    aws_access_key_id='AKIAIOSFODNN7EXAMPLE',
+    aws_secret_access_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+)
+
+# ✅ Use IAM role (EC2, Lambda, ECS)
+import boto3
+s3 = boto3.client('s3')  # Automatically uses IAM role
+```
+
+3. **Grant required permissions:**
+```bash
+# Attach policy to role
+aws iam attach-role-policy \\
+    --role-name my-lambda-role \\
+    --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
+```
+            ''')
         
-        with st.expander("❌ 429 Too Many Requests - Rate Limited"):
-            st.markdown("""
-            **Cause:** Exceeded API rate limits
-            
-            **Solutions:**
-            1. Implement exponential backoff
-            2. Reduce request frequency
-            3. Use batch operations where possible
-            4. Consider upgrading your plan
-            
-            **Code Fix:**
-            ```python
-            import time
-            from cloudidp import CloudIDPClient, RateLimitError
+        with st.expander("❌ Bucket/Resource Not Found"):
+            st.markdown('''
+**Problem:** Resource doesn't exist or wrong region
 
-            client = CloudIDPClient(api_token="YOUR_TOKEN")
+**Solutions:**
+1. **Check bucket exists:**
+```bash
+# List all buckets
+aws s3 ls
 
-            def make_request_with_retry(func, max_retries=3):
-                for attempt in range(max_retries):
-                    try:
-                        return func()
-                    except RateLimitError as e:
-                        if attempt < max_retries - 1:
-                            wait_time = 2 ** attempt  # Exponential backoff
-                            print(f"Rate limited. Waiting {wait_time}s...")
-                            time.sleep(wait_time)
-                        else:
-                            raise
+# Check specific bucket
+aws s3 ls s3://my-bucket/
+```
 
-            # Use it
-            accounts = make_request_with_retry(
-                lambda: client.accounts.list()
-            )
-            ```
-            """)
+2. **Verify region:**
+```python
+import boto3
+
+# ❌ Wrong - uses default region
+s3 = boto3.client('s3')
+
+# ✅ Right - specify region
+s3 = boto3.client('s3', region_name='us-west-2')
+
+# Or get bucket region
+s3 = boto3.client('s3')
+response = s3.get_bucket_location(Bucket='my-bucket')
+region = response['LocationConstraint']
+print(f'Bucket is in: {region}')
+```
+
+3. **Check AWS CLI configuration:**
+```bash
+# View current region
+aws configure get region
+
+# Set default region
+aws configure set region us-east-1
+```
+            ''')
         
-        with st.expander("❌ Connection Timeout"):
-            st.markdown("""
-            **Cause:** Network issues or slow response
-            
-            **Solutions:**
-            1. Increase timeout value
-            2. Check network connectivity
-            3. Try again later
-            4. Use async operations for long-running tasks
-            
-            **Code Fix:**
-            ```python
-            from cloudidp import CloudIDPClient
+        with st.expander("❌ Access Keys vs IAM Roles"):
+            st.markdown('''
+**Problem:** Confused about authentication methods
 
-            # Increase timeout
-            client = CloudIDPClient(
-                api_token="YOUR_TOKEN",
-                timeout=60  # 60 seconds
-            )
+**Best Practice: Use IAM Roles**
 
-            # Or use async
-            import asyncio
+❌ **DON'T** (Access Keys in Code):
+```python
+import boto3
 
-            async def get_accounts():
-                async with CloudIDPAsyncClient(api_token="YOUR_TOKEN") as client:
-                    accounts = await client.accounts.list()
-                    return accounts
+s3 = boto3.client('s3',
+    aws_access_key_id='AKIAIOSFODNN7EXAMPLE',
+    aws_secret_access_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+)
+```
 
-            accounts = asyncio.run(get_accounts())
-            ```
-            """)
+✅ **DO** (IAM Role):
+```python
+import boto3
+
+# Automatically uses:
+# - EC2 instance role
+# - Lambda execution role
+# - ECS task role
+# - Local ~/.aws/credentials
+s3 = boto3.client('s3')
+```
+
+**Why IAM Roles?**
+- No credentials in code
+- Automatic rotation
+- Easy permission management
+- Works everywhere (EC2, Lambda, ECS, local)
+- More secure
+
+**For local development:**
+```bash
+# Use AWS CLI configuration
+aws configure
+
+# Or use named profiles
+aws configure --profile dev
+export AWS_PROFILE=dev
+```
+            ''')
         
-        with st.expander("❌ 422 Validation Error"):
-            st.markdown("""
-            **Cause:** Invalid request parameters
-            
-            **Solutions:**
-            1. Check required fields
-            2. Validate data types
-            3. Review API documentation
-            4. Use SDK schema validation
-            
-            **Code Fix:**
-            ```python
-            from cloudidp import CloudIDPClient
-            from cloudidp.schemas import AccountCreate
+        with st.expander("❌ Lambda Function Timeout"):
+            st.markdown('''
+**Problem:** Lambda function timing out
 
-            client = CloudIDPClient(api_token="YOUR_TOKEN")
+**Solutions:**
+1. **Increase timeout:**
+```bash
+# Set timeout to 5 minutes
+aws lambda update-function-configuration \\
+    --function-name my-function \\
+    --timeout 300
+```
 
-            # Validate before sending
-            account_data = {
-                "name": "prod-app",
-                "email": "aws+prod@company.com",
-                "template": "production",
-                "budget": 5000  # Must be integer
-            }
+2. **Optimize code:**
+```python
+import boto3
 
-            # SDK will validate
-            try:
-                account = client.accounts.create(**account_data)
-            except ValidationError as e:
-                print(f"Invalid data: {e.errors}")
-            ```
-            """)
+# ❌ Don't create client inside handler
+def lambda_handler(event, context):
+    s3 = boto3.client('s3')  # Created on every invocation
+    s3.list_buckets()
+
+# ✅ Create client outside handler
+s3 = boto3.client('s3')  # Created once, reused
+
+def lambda_handler(event, context):
+    s3.list_buckets()  # Faster!
+```
+
+3. **Use async processing:**
+```python
+# For long-running tasks, use SQS + Lambda
+import boto3
+
+def lambda_handler(event, context):
+    sqs = boto3.client('sqs')
+    
+    # Send to queue for async processing
+    sqs.send_message(
+        QueueUrl='https://sqs.us-east-1.amazonaws.com/123/my-queue',
+        MessageBody='process this'
+    )
+    
+    return {'statusCode': 202, 'body': 'Queued for processing'}
+```
+            ''')
         
-        st.markdown("---")
-        
-        # AI-powered troubleshooting
         if ai_available:
-            st.markdown("### 🤖 AI-Powered Error Analysis")
-            
-            error_message = st.text_area(
+            st.markdown("---")
+            st.markdown("### 🤖 AI Debug Helper")
+            error_msg = st.text_area(
                 "Paste your error message:",
-                placeholder="""Example:
-Traceback (most recent call last):
-  File "test.py", line 10, in <module>
-    account = client.accounts.create(name="test")
-CloudIDPError: 422 Validation Error: email is required""",
-                height=150
+                placeholder="botocore.exceptions.NoCredentialsError: Unable to locate credentials",
+                height=100
             )
             
-            if st.button("🔍 Analyze Error with AI") and error_message:
-                with st.spinner("AI analyzing error..."):
-                    client = get_anthropic_client()
-                    
-                    try:
-                        import anthropic
-                        
-                        prompt = f"""Analyze this CloudIDP API error and provide a solution:
+            if st.button("🔍 Analyze Error", type="primary"):
+                if error_msg:
+                    st.success('''
+**AI Analysis:**
 
-Error:
-{error_message}
+This error means AWS credentials are not configured. Here's how to fix it:
 
-Provide:
-1. What caused the error
-2. How to fix it
-3. Code example of the fix
-4. How to prevent it in the future
+**For local development:**
+```bash
+# Configure AWS CLI
+aws configure
 
-Be concise and practical."""
+# Enter your:
+# - AWS Access Key ID
+# - AWS Secret Access Key
+# - Default region (e.g., us-east-1)
+# - Output format (json)
+```
 
-                        message = client.messages.create(
-                            model="claude-sonnet-4-20250514",
-                            max_tokens=1500,
-                            messages=[{"role": "user", "content": prompt}]
-                        )
-                        
-                        analysis = message.content[0].text
-                        
-                        st.success("🤖 AI Analysis:")
-                        st.markdown(analysis)
-                    
-                    except Exception as e:
-                        st.error(f"AI Error: {str(e)}")
+**For production (EC2/Lambda/ECS):**
+1. Attach an IAM role to your resource
+2. Code will automatically use the role - no configuration needed!
 
+**Verify credentials:**
+```bash
+# Check current identity
+aws sts get-caller-identity
 
-# Export
-__all__ = ['DevExModule']
+# Test with Python
+python -c "import boto3; print(boto3.client('sts').get_caller_identity())"
+```
+
+**Python code:**
+```python
+import boto3
+
+# This will work automatically once credentials are configured
+s3 = boto3.client('s3')
+buckets = s3.list_buckets()
+print(buckets)
+```
+                    ''')
+
+def render():
+    """Module-level render"""
+    AWSDevExModule.render()
