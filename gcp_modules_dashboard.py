@@ -88,13 +88,13 @@ class GCPDashboardModule:
                 GCPTheme.gcp_card(
                     title=proj.project_name,
                     content=f"""
-                    **Project ID:** {proj.project_id}<br>
-                    **Project Number:** {proj.project_number}<br>
-                    **Environment:** {proj.environment.title()}<br>
-                    **Regions:** {', '.join(proj.regions[:3])} {f'(+{len(proj.regions)-3} more)' if len(proj.regions) > 3 else ''}<br>
-                    **Billing Account:** {proj.billing_account_id[:8]}...{proj.billing_account_id[-4:]}<br>
-                    **Cost Center:** {proj.cost_center or 'Not set'}<br>
-                    **Owner:** {proj.owner_email or 'Not set'}
+                    <strong>Project ID:</strong> {proj.project_id}<br>
+                    <strong>Project Number:</strong> {proj.project_number}<br>
+                    <strong>Environment:</strong> {proj.environment.title()}<br>
+                    <strong>Regions:</strong> {', '.join(proj.regions[:3])} {f'(+{len(proj.regions)-3} more)' if len(proj.regions) > 3 else ''}<br>
+                    <strong>Billing Account:</strong> {proj.billing_account_id[:8]}...{proj.billing_account_id[-4:]}<br>
+                    <strong>Cost Center:</strong> {proj.cost_center or 'Not set'}<br>
+                    <strong>Owner:</strong> {proj.owner_email or 'Not set'}
                     """,
                     icon="🔴",
                     accent=accents[idx % len(accents)]

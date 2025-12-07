@@ -82,11 +82,11 @@ class AzureDashboardModule:
                 AzureTheme.azure_card(
                     title=sub.subscription_name,
                     content=f"""
-                    **Subscription ID:** {sub.subscription_id[:8]}...{sub.subscription_id[-4:]}<br>
-                    **Environment:** {sub.environment.title()}<br>
-                    **Regions:** {', '.join(sub.regions[:3])} {f'(+{len(sub.regions)-3} more)' if len(sub.regions) > 3 else ''}<br>
-                    **Cost Center:** {sub.cost_center or 'Not set'}<br>
-                    **Owner:** {sub.owner_email or 'Not set'}
+                    <strong>Subscription ID:</strong> {sub.subscription_id[:8]}...{sub.subscription_id[-4:]}<br>
+                    <strong>Environment:</strong> {sub.environment.title()}<br>
+                    <strong>Regions:</strong> {', '.join(sub.regions[:3])} {f'(+{len(sub.regions)-3} more)' if len(sub.regions) > 3 else ''}<br>
+                    <strong>Cost Center:</strong> {sub.cost_center or 'Not set'}<br>
+                    <strong>Owner:</strong> {sub.owner_email or 'Not set'}
                     """,
                     icon="🔷"
                 )
