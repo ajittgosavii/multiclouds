@@ -1,120 +1,216 @@
 """
-GCP Module: GKE Management
-Google Kubernetes Engine cluster management
+Google Kubernetes Engine (GKE) Management - AI-Powered Operations
+Complete lifecycle management, monitoring, optimization, and troubleshooting for GKE clusters
 """
 
 import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
 from gcp_theme import GCPTheme
 from config_settings import AppConfig
+import json
 
 class GCPGKEManagementModule:
-    """GCP GKE Management module"""
+    """AI-Enhanced GKE Operations Intelligence Center"""
     
     @staticmethod
     def render():
-        """Render GCP GKE Management"""
+        """Render GKE Operations Intelligence Center"""
         
-        # Header
         GCPTheme.gcp_header(
-            "GKE Management",
-            "Google Kubernetes Engine cluster management",
-            "📌"
+            "GKE Operations Intelligence",
+            "AI-Powered Day 2 Operations - Monitor, Optimize, Secure, and Troubleshoot your GKE clusters",
+            "⎈"
         )
         
-        # Load projects
         projects = AppConfig.load_gcp_projects()
         active_projects = [proj for proj in projects if proj.status == 'active']
         
-        # Demo mode indicator
         if st.session_state.get('mode') == 'Demo':
             GCPTheme.gcp_info_box(
                 "Demo Mode Active",
-                "Displaying sample data for GKE Management. Connect your GCP account to see real data.",
+                "Using sample GKE cluster data. Connect your GCP account for real operations.",
                 "info"
             )
         
-        # Module content
-        GCPTheme.gcp_section_header("Overview", "📌")
+        tabs = st.tabs([
+            "🎯 Operations Dashboard",
+            "⚙️ Cluster Management",
+            "📦 Workloads & Pods",
+            "💰 Cost Optimization",
+            "🔒 Security",
+            "🤖 AI Insights",
+            "📊 Reports"
+        ])
         
-        st.write("""
-        This module provides Google Kubernetes Engine cluster management.
+        with tabs[0]:
+            GCPGKEManagementModule._render_operations_dashboard(projects)
+        with tabs[1]:
+            GCPGKEManagementModule._render_cluster_management(projects)
+        with tabs[2]:
+            GCPGKEManagementModule._render_workloads(projects)
+        with tabs[3]:
+            GCPGKEManagementModule._render_cost_optimization(projects)
+        with tabs[4]:
+            GCPGKEManagementModule._render_security(projects)
+        with tabs[5]:
+            GCPGKEManagementModule._render_ai_insights()
+        with tabs[6]:
+            GCPGKEManagementModule._render_reports(projects)
+    
+    @staticmethod
+    def _render_operations_dashboard(projects):
+        """Operations dashboard"""
         
-        **Features:**
-        - Project-level management
-        - Resource monitoring and control
-        - Cost tracking and optimization
-        - Security and compliance
-        """)
+        GCPTheme.gcp_section_header("🎯 Operations Dashboard", "📊")
         
-        # Metrics with Google colors
-        st.markdown("### 📊 Key Metrics")
-        col1, col2, col3 = st.columns(3)
-        
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            GCPTheme.gcp_metric_card(
-                label="Total Items",
-                value="189",
-                icon="📌",
-                metric_type="default"
-            )
-        
+            st.metric("Total Clusters", "9", delta="↑ 2")
         with col2:
-            GCPTheme.gcp_metric_card(
-                label="Active",
-                value="178",
-                icon="✅",
-                delta="+9 this week",
-                metric_type="performance"
-            )
-        
+            st.metric("Healthy", "8", delta="89%")
         with col3:
-            GCPTheme.gcp_metric_card(
-                label="Monthly Cost",
-                value="$8.7K",
-                icon="💰",
-                delta="-$620 (6.7%)",
-                metric_type="cost"
-            )
+            st.metric("Total Pods", "712", delta="↑ 45")
+        with col4:
+            st.metric("Alerts", "3", delta="↓ 2")
+        with col5:
+            st.metric("Monthly Cost", "$14,320", delta="↑ 6%")
         
-        GCPTheme.gcp_multi_color_divider()
+        st.markdown("---")
         
-        # Project breakdown
-        GCPTheme.gcp_section_header("Project Breakdown", "📋")
+        clusters_data = [
+            {"Cluster": "prod-gke-us-central1", "Project": "production", "Nodes": 15, "Pods": 298, "CPU": "71%", "Memory": "68%", "Health": "✅ Healthy", "Cost/Month": "$5,120"},
+            {"Cluster": "dev-gke-central", "Project": "development", "Nodes": 5, "Pods": 68, "CPU": "85%", "Memory": "91%", "Health": "⚠️ High Usage", "Cost/Month": "$1,680"}
+        ]
         
-        accents = ["blue", "red", "yellow", "green"]
-        for idx, proj in enumerate(active_projects):
-            with st.expander(f"{icon} {{proj.project_name}}", expanded=False):
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.write(f"**Project ID:** {{proj.project_id}}")
-                    st.write(f"**Environment:** {{proj.environment.title()}}")
-                    st.write(f"**Regions:** {{', '.join(proj.regions[:2])}}")
-                
-                with col2:
-                    st.write(f"**Cost Center:** {{proj.cost_center or 'Not set'}}")
-                    st.write(f"**Owner:** {{proj.owner_email or 'Not set'}}")
-                    st.markdown(GCPTheme.gcp_status_badge(proj.status), unsafe_allow_html=True)
+        st.dataframe(pd.DataFrame(clusters_data), use_container_width=True, hide_index=True)
+    
+    @staticmethod
+    def _render_cluster_management(projects):
+        """Cluster management"""
         
-        GCPTheme.gcp_multi_color_divider()
+        GCPTheme.gcp_section_header("⚙️ Cluster Management", "🔧")
         
-        # Actions
-        GCPTheme.gcp_section_header("Actions", "⚙️")
+        cluster = st.selectbox("Select Cluster", ["prod-gke-us-central1", "dev-gke-central"], key="gke_cluster")
+        
+        with st.expander("⚙️ Settings", expanded=True):
+            st.selectbox("K8s Version", ["1.28.4-gke.1083000"], key="k8s_ver")
+            st.selectbox("Region", ["us-central1", "us-east1"], key="region")
+        
+        if st.button("🔄 Upgrade", type="primary"):
+            st.success("✅ Upgrade initiated (Demo)")
+    
+    @staticmethod
+    def _render_workloads(projects):
+        """Workloads"""
+        
+        GCPTheme.gcp_section_header("📦 Workloads", "🚀")
         
         col1, col2, col3 = st.columns(3)
-        
         with col1:
-            if st.button("🔄 Refresh Data", key="gke_management_refresh"):
-                st.success("Data refreshed successfully!")
-        
+            st.metric("Running Pods", "298")
         with col2:
-            if st.button("📊 Generate Report", key="gke_management_report"):
-                st.success("Report generated successfully!")
-        
+            st.metric("Pending", "4")
         with col3:
-            if st.button("⚙️ Configure", key="gke_management_config"):
-                st.info("Configuration options coming soon!")
+            st.metric("Failed", "2")
+    
+    @staticmethod
+    def _render_cost_optimization(projects):
+        """Cost optimization"""
+        
+        GCPTheme.gcp_section_header("💰 Cost Optimization", "💵")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Monthly Total", "$14,320")
+        with col2:
+            st.metric("Compute", "$10,180")
+        with col3:
+            st.metric("Savings Available", "$4,280")
+        
+        st.success("**💰 Potential Savings: $4,280/mo**")
+    
+    @staticmethod
+    def _render_security(projects):
+        """Security"""
+        
+        GCPTheme.gcp_section_header("🔒 Security", "🛡️")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Security Score", "82/100")
+        with col2:
+            st.metric("Critical", "1")
+        with col3:
+            st.metric("High", "4")
+    
+    @staticmethod
+    def _render_ai_insights():
+        """AI insights"""
+        
+        GCPTheme.gcp_section_header("🤖 AI Insights", "🧠")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("AI Confidence", "95%")
+        with col2:
+            st.metric("Recommendations", "9")
+        with col3:
+            st.metric("Savings", "$4,280/mo")
+        
+        st.markdown("---")
+        st.markdown("### 💡 Recommendations")
+        
+        recs = [
+            {"title": "Use Preemptible VMs", "impact": "$1,680/mo", "confidence": 95},
+            {"title": "Fix High Memory", "impact": "Stability", "confidence": 98}
+        ]
+        
+        for i, rec in enumerate(recs):
+            with st.expander(f"**{rec['title']}** - {rec['impact']} • {rec['confidence']}%"):
+                if st.button("✅ Apply", key=f"ai_{i}"):
+                    st.success("Applied! (Demo)")
+        
+        st.markdown("---")
+        st.markdown("### 💬 AI Assistant")
+        
+        query = st.text_area("Ask about GKE:", height=80, key="gke_query")
+        
+        if st.button("🤖 Ask AI", type="primary"):
+            if query:
+                st.markdown(GCPGKEManagementModule._generate_ai_response(query))
+    
+    @staticmethod
+    def _render_reports(projects):
+        """Reports"""
+        
+        GCPTheme.gcp_section_header("📊 Reports", "📤")
+        
+        if st.button("📥 Generate Report"):
+            st.success("✅ Report generated (Demo)")
+    
+    @staticmethod
+    def _generate_ai_response(query: str):
+        """AI response"""
+        
+        if "crash" in query.lower():
+            return """**🔍 CrashLoopBackOff:**
+Likely OOMKilled. Increase memory to 512Mi.
 
-def render():
-    """Module entry point"""
-    GCPGKEManagementModule.render()
+**Fix:**
+```yaml
+resources:
+  limits:
+    memory: "512Mi"
+```"""
+        
+        elif "cost" in query.lower():
+            return """**💰 Savings: $4,280/mo**
+
+1. Preemptible VMs: $1,680/mo
+2. Committed use: $1,200/mo
+3. Autoscaler: $1,040/mo"""
+        
+        return f"AI analysis for: {query}"
