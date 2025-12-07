@@ -7,7 +7,7 @@ import streamlit as st
 import json
 import os
 
-class AWSDevExModule:
+class DevExModule:
     """AWS Developer Experience - Practical Coding Helper"""
     
     @staticmethod
@@ -34,21 +34,21 @@ class AWSDevExModule:
         ])
         
         with tabs[0]:
-            AWSDevExModule._render_developer_portal()
+            DevExModule._render_developer_portal()
         with tabs[1]:
-            AWSDevExModule._render_quick_reference()
+            DevExModule._render_quick_reference()
         with tabs[2]:
-            AWSDevExModule._render_code_generator()
+            DevExModule._render_code_generator()
         with tabs[3]:
-            AWSDevExModule._render_cli_commands()
+            DevExModule._render_cli_commands()
         with tabs[4]:
-            AWSDevExModule._render_getting_started()
+            DevExModule._render_getting_started()
         with tabs[5]:
-            AWSDevExModule._render_try_it_now()
+            DevExModule._render_try_it_now()
         with tabs[6]:
-            AWSDevExModule._render_ai_helper(ai_available)
+            DevExModule._render_ai_helper(ai_available)
         with tabs[7]:
-            AWSDevExModule._render_debug_assistant(ai_available)
+            DevExModule._render_debug_assistant(ai_available)
     
     @staticmethod
     def _render_developer_portal():
@@ -1179,4 +1179,4 @@ print(buckets)
 
 def render():
     """Module-level render"""
-    AWSDevExModule.render()
+    DevExModule.render()
