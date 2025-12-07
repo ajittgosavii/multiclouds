@@ -16,7 +16,7 @@ class GCPNetworkManagementModule:
         if st.session_state.get('mode') == 'Demo':
             GCPTheme.gcp_info_box("Demo Mode", "Using sample network data", "info")
         
-        tabs = st.tabs(["📋 Overview", "🔌 VPCs", "🔒 Firewall", "📊 Traffic", "⚙️ Config"])
+        tabs = st.tabs(["📋 Overview", "🔌 VPCs", "🔒 Firewall", "📊 Traffic", "🤖 AI Insights", "⚙️ Config"])
         
         with tabs[0]:
             GCPNetworkManagementModule._overview()
@@ -27,9 +27,9 @@ class GCPNetworkManagementModule:
         with tabs[3]:
             GCPNetworkManagementModule._traffic()
         with tabs[4]:
-            _render_ai_insights()
+            GCPNetworkManagementModule._render_ai_insights()
 
-        with tabs[4]:
+        with tabs[5]:
             GCPNetworkManagementModule._config()
     
     @staticmethod

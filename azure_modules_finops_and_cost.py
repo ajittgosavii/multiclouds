@@ -30,7 +30,7 @@ class AzureFinOpsCostModule:
         with tabs[3]:
             AzureFinOpsCostModule._budgets()
         with tabs[4]:
-            _render_ai_insights()
+            AzureFinOpsCostModule._render_ai_insights()
 
         with tabs[4]:
             AzureFinOpsCostModule._reports()
@@ -143,7 +143,7 @@ class AzureFinOpsCostModule:
                 st.success("Cost data exported")
 
     @staticmethod
-    def _render_ai_insights():
+    def AzureFinOpsCostModule._render_ai_insights():
         """Azure AI-powered insights and recommendations"""
         
         AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")

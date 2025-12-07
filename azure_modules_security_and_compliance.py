@@ -20,7 +20,7 @@ class AzureSecurityComplianceModule:
         if st.session_state.get('mode') == 'Demo':
             AzureTheme.azure_info_box("Demo Mode", "Using sample security data", "info")
         
-        tabs = st.tabs(["📋 Overview", "🛡️ Security", "✅ Compliance", "⚠️ Alerts", "📊 Reports"])
+        tabs = st.tabs(["📋 Overview", "🛡️ Security", "✅ Compliance", "⚠️ Alerts", "🤖 AI Insights", "📊 Reports"])
         
         with tabs[0]:
             AzureSecurityComplianceModule._overview()
@@ -31,9 +31,9 @@ class AzureSecurityComplianceModule:
         with tabs[3]:
             AzureSecurityComplianceModule._alerts()
         with tabs[4]:
-            _render_ai_insights()
+            AzureSecurityComplianceModule._render_ai_insights()
 
-        with tabs[4]:
+        with tabs[5]:
             AzureSecurityComplianceModule._reports(subscriptions)
     
     @staticmethod
@@ -163,7 +163,7 @@ class AzureSecurityComplianceModule:
                 st.success("Security data exported (Demo)")
 
     @staticmethod
-    def _render_ai_insights():
+    def AzureSecurityComplianceModule._render_ai_insights():
         """Azure AI-powered insights and recommendations"""
         
         AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")

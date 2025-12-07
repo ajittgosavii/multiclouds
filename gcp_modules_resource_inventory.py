@@ -33,7 +33,7 @@ class GCPResourceInventoryModule:
         with tabs[3]:
             GCPResourceInventoryModule._labels()
         with tabs[4]:
-            _render_ai_insights()
+            GCPResourceInventoryModule._render_ai_insights()
 
         with tabs[4]:
             GCPResourceInventoryModule._export(projects)
@@ -150,7 +150,7 @@ class GCPResourceInventoryModule:
                 st.download_button("Download", df.to_csv(index=False), "resources.csv", "text/csv")
 
     @staticmethod
-    def _render_ai_insights():
+    def GCPResourceInventoryModule._render_ai_insights():
         """GCP AI-powered insights and recommendations"""
         
         GCPTheme.gcp_section_header("🤖 AI-Powered Insights", "🧠")

@@ -30,7 +30,7 @@ class GCPFinOpsCostModule:
         with tabs[3]:
             GCPFinOpsCostModule._budgets()
         with tabs[4]:
-            _render_ai_insights()
+            GCPFinOpsCostModule._render_ai_insights()
 
         with tabs[4]:
             GCPFinOpsCostModule._reports()
@@ -121,7 +121,7 @@ class GCPFinOpsCostModule:
             st.success(f"{report_type} generated")
 
     @staticmethod
-    def _render_ai_insights():
+    def GCPFinOpsCostModule._render_ai_insights():
         """GCP AI-powered insights and recommendations"""
         
         GCPTheme.gcp_section_header("🤖 AI-Powered Insights", "🧠")

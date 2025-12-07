@@ -66,7 +66,7 @@ class AzureResourceInventoryModule:
             AzureResourceInventoryModule._render_tag_compliance(subscriptions)
         
         with tabs[5]:
-            _render_ai_insights()
+            AzureResourceInventoryModule._render_ai_insights()
 
         with tabs[4]:
             AzureResourceInventoryModule._render_reports_export(subscriptions)
@@ -461,7 +461,7 @@ class AzureResourceInventoryModule:
                 st.success("✅ Inventory exported (Demo mode)")
 
     @staticmethod
-    def _render_ai_insights():
+    def AzureResourceInventoryModule._render_ai_insights():
         """Azure AI-powered insights and recommendations"""
         
         AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")

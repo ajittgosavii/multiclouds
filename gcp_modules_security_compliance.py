@@ -16,7 +16,7 @@ class GCPSecurityComplianceModule:
         if st.session_state.get('mode') == 'Demo':
             GCPTheme.gcp_info_box("Demo Mode", "Using sample security data", "info")
         
-        tabs = st.tabs(["📋 Overview", "🛡️ Security", "✅ Compliance", "⚠️ Findings", "📊 Reports"])
+        tabs = st.tabs(["📋 Overview", "🛡️ Security", "✅ Compliance", "⚠️ Findings", "🤖 AI Insights", "📊 Reports"])
         
         with tabs[0]:
             GCPSecurityComplianceModule._overview()
@@ -27,9 +27,9 @@ class GCPSecurityComplianceModule:
         with tabs[3]:
             GCPSecurityComplianceModule._findings()
         with tabs[4]:
-            _render_ai_insights()
+            GCPSecurityComplianceModule._render_ai_insights()
 
-        with tabs[4]:
+        with tabs[5]:
             GCPSecurityComplianceModule._reports()
     
     @staticmethod
@@ -122,7 +122,7 @@ class GCPSecurityComplianceModule:
             st.success(f"{report_type} report generated (Demo)")
 
     @staticmethod
-    def _render_ai_insights():
+    def GCPSecurityComplianceModule._render_ai_insights():
         """GCP AI-powered insights and recommendations"""
         
         GCPTheme.gcp_section_header("🤖 AI-Powered Insights", "🧠")

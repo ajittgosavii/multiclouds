@@ -16,7 +16,7 @@ class AzureNetworkManagementModule:
         if st.session_state.get('mode') == 'Demo':
             AzureTheme.azure_info_box("Demo Mode", "Using sample network data", "info")
         
-        tabs = st.tabs(["📋 Overview", "🔌 VNets", "🔒 Security", "📊 Traffic", "⚙️ Config"])
+        tabs = st.tabs(["📋 Overview", "🔌 VNets", "🔒 Security", "📊 Traffic", "🤖 AI Insights", "⚙️ Config"])
         
         with tabs[0]:
             AzureNetworkManagementModule._overview()
@@ -27,9 +27,9 @@ class AzureNetworkManagementModule:
         with tabs[3]:
             AzureNetworkManagementModule._traffic()
         with tabs[4]:
-            _render_ai_insights()
+            AzureNetworkManagementModule._render_ai_insights()
 
-        with tabs[4]:
+        with tabs[5]:
             AzureNetworkManagementModule._config()
     
     @staticmethod
@@ -138,7 +138,7 @@ class AzureNetworkManagementModule:
             st.success("Network configuration saved")
 
     @staticmethod
-    def _render_ai_insights():
+    def AzureNetworkManagementModule._render_ai_insights():
         """Azure AI-powered insights and recommendations"""
         
         AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")
