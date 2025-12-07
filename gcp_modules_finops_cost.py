@@ -121,7 +121,7 @@ class GCPFinOpsCostModule:
             st.success(f"{report_type} generated")
 
     @staticmethod
-    def GCPFinOpsCostModule._render_ai_insights():
+    def _render_ai_insights():
         """GCP AI-powered insights and recommendations"""
         
         GCPTheme.gcp_section_header("🤖 AI-Powered Insights", "🧠")

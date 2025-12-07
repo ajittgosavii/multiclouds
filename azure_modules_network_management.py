@@ -138,7 +138,7 @@ class AzureNetworkManagementModule:
             st.success("Network configuration saved")
 
     @staticmethod
-    def AzureNetworkManagementModule._render_ai_insights():
+    def _render_ai_insights():
         """Azure AI-powered insights and recommendations"""
         
         AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")

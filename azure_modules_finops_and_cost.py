@@ -143,7 +143,7 @@ class AzureFinOpsCostModule:
                 st.success("Cost data exported")
 
     @staticmethod
-    def AzureFinOpsCostModule._render_ai_insights():
+    def _render_ai_insights():
         """Azure AI-powered insights and recommendations"""
         
         AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")

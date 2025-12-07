@@ -163,7 +163,7 @@ class AzureSecurityComplianceModule:
                 st.success("Security data exported (Demo)")
 
     @staticmethod
-    def AzureSecurityComplianceModule._render_ai_insights():
+    def _render_ai_insights():
         """Azure AI-powered insights and recommendations"""
         
         AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")

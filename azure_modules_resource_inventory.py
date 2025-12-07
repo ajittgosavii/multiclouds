@@ -72,11 +72,7 @@ class AzureResourceInventoryModule:
             AzureResourceInventoryModule._render_reports_export(subscriptions)
     
     @staticmethod
-    
-        
-        with tabs[4]:
-            AzureResourceInventoryModule._render_ai_insights()
-        def _render_overview(subscriptions):
+    def _render_overview(subscriptions):
         """Overview tab"""
         
         AzureTheme.azure_section_header("Resource Portfolio Overview", "📊")
@@ -461,7 +457,7 @@ class AzureResourceInventoryModule:
                 st.success("✅ Inventory exported (Demo mode)")
 
     @staticmethod
-    def AzureResourceInventoryModule._render_ai_insights():
+    def _render_ai_insights():
         """Azure AI-powered insights and recommendations"""
         
         AzureTheme.azure_section_header("🤖 AI-Powered Insights", "🧠")

@@ -122,7 +122,7 @@ class GCPSecurityComplianceModule:
             st.success(f"{report_type} report generated (Demo)")
 
     @staticmethod
-    def GCPSecurityComplianceModule._render_ai_insights():
+    def _render_ai_insights():
         """GCP AI-powered insights and recommendations"""
         
         GCPTheme.gcp_section_header("🤖 AI-Powered Insights", "🧠")
