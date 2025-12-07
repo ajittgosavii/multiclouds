@@ -18,7 +18,7 @@ sys.path.append(str(Path(__file__).parent / "src"))
 try:
     from auth_azure_sso import init_authentication
     from auth_ui_components import render_login_page, render_user_profile
-    from auth_database_firebase import get_database_manager  # ← FIREBASE (not Firestore)
+    from auth_database_firestore import get_database_manager
     
     AUTH_ENABLED = True
 except ImportError as e:
