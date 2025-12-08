@@ -63,11 +63,11 @@ class Navigation:
                     st.session_state.active_module = item['key']
                     st.rerun()
         
-        # Row 2: Next 8 modules
+        # Row 2: Modules 8-15 (next 8 modules)
         col9, col10, col11, col12, col13, col14, col15, col16 = st.columns(8)
         cols_row2 = [col9, col10, col11, col12, col13, col14, col15, col16]
         
-        for idx, item in enumerate(nav_items[8:]):
+        for idx, item in enumerate(nav_items[8:16]):  # Only items 8-15
             with cols_row2[idx]:
                 button_type = "primary" if st.session_state.active_module == item['key'] else "secondary"
                 if st.button(
@@ -78,6 +78,33 @@ class Navigation:
                 ):
                     st.session_state.active_module = item['key']
                     st.rerun()
+        
+        # Row 3: Remaining modules (16+)
+        if len(nav_items) > 16:
+            remaining_items = nav_items[16:]
+            num_remaining = len(remaining_items)
+            
+            # Create columns for remaining items
+            if num_remaining == 1:
+                col17 = st.columns(1)[0]
+                cols_row3 = [col17]
+            elif num_remaining <= 8:
+                cols_row3 = st.columns(num_remaining)
+            else:
+                # If more than 8, use 8 columns
+                cols_row3 = st.columns(8)
+            
+            for idx, item in enumerate(remaining_items[:len(cols_row3)]):
+                with cols_row3[idx]:
+                    button_type = "primary" if st.session_state.active_module == item['key'] else "secondary"
+                    if st.button(
+                        f"{item['icon']} {item['label']}",
+                        key=f"nav_{item['key']}",
+                        use_container_width=True,
+                        type=button_type
+                    ):
+                        st.session_state.active_module = item['key']
+                        st.rerun()
         
         st.markdown("---")
         
