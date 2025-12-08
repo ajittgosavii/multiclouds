@@ -374,27 +374,81 @@ def render_login():
         # Clean professional login page with bordered logo and centered link
         st.markdown(f"""
         <style>
+        body {{
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }}
         .login-container {{
             max-width: 500px;
             margin: 100px auto;
             padding: 50px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.1),
+                0 8px 20px rgba(0, 120, 212, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }}
         .logo-wrapper {{
             display: inline-block;
             padding: 20px;
-            border: 2px solid #E1E8ED;
-            border-radius: 12px;
+            border-radius: 16px;
             margin-bottom: 30px;
-            background: #F7F9FA;
+            position: relative;
+            background: linear-gradient(135deg, rgba(0, 120, 212, 0.1) 0%, rgba(79, 172, 254, 0.15) 100%);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 8px 32px rgba(0, 120, 212, 0.15),
+                0 2px 8px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            transition: all 0.4s ease;
+        }}
+        .logo-wrapper::before {{
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #0078D4 0%, #4FACFE 50%, #0078D4 100%);
+            border-radius: 16px;
+            z-index: -1;
+            opacity: 0.6;
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+        }}
+        .logo-wrapper:hover {{
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 
+                0 12px 48px rgba(0, 120, 212, 0.25),
+                0 4px 12px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }}
+        @keyframes gradientShift {{
+            0% {{ background-position: 0% 50%; }}
+            50% {{ background-position: 100% 50%; }}
+            100% {{ background-position: 0% 50%; }}
         }}
         .logo {{
             font-size: 72px;
             line-height: 1;
             filter: invert(44%) sepia(82%) saturate(2890%) hue-rotate(188deg) brightness(95%) contrast(101%);
+            animation: pulse 2s ease-in-out infinite;
+        }}
+        @keyframes pulse {{
+            0%, 100% {{ 
+                transform: scale(1);
+                opacity: 1;
+            }}
+            50% {{ 
+                transform: scale(1.05);
+                opacity: 0.9;
+            }}
         }}
         .title {{
             font-size: 36px;
@@ -411,20 +465,46 @@ def render_login():
         }}
         .signin-link {{
             display: inline-block;
-            padding: 12px 32px;
-            color: #0078D4;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-            border: 2px solid #0078D4;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            background: white;
-        }}
-        .signin-link:hover {{
-            background: #0078D4;
+            padding: 14px 36px;
             color: white;
             text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #0078D4 0%, #4FACFE 100%);
+            box-shadow: 
+                0 4px 16px rgba(0, 120, 212, 0.3),
+                0 2px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }}
+        .signin-link::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }}
+        .signin-link:hover {{
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 
+                0 8px 24px rgba(0, 120, 212, 0.4),
+                0 4px 12px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            color: white;
+        }}
+        .signin-link:hover::before {{
+            left: 100%;
+        }}
+        .signin-link:active {{
+            transform: translateY(0) scale(0.98);
         }}
         </style>
         
