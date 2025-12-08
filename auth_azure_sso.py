@@ -1,6 +1,6 @@
 """
-Azure AD SSO Authentication - FIXED VERSION
-Addresses redirect URI issues and improves OAuth flow
+Azure AD SSO Authentication - DEBUG VERSION
+Shows exact configuration being used to help diagnose issues
 """
 
 import streamlit as st
@@ -9,7 +9,7 @@ from functools import wraps
 
 
 # ============================================================================
-# ROLE-BASED ACCESS CONTROL
+# ROLE-BASED ACCESS CONTROL (Same as before)
 # ============================================================================
 
 class RoleManager:
@@ -107,7 +107,7 @@ class SimpleUserManager:
 
 
 # ============================================================================
-# AZURE AD AUTHENTICATION - FIXED VERSION
+# AZURE AD AUTHENTICATION - DEBUG VERSION
 # ============================================================================
 
 def exchange_code_for_token(code: str, client_id: str, client_secret: str, 
@@ -135,7 +135,7 @@ def exchange_code_for_token(code: str, client_id: str, client_secret: str,
             
             st.error(f"❌ Authentication Failed")
             
-            with st.expander("🔍 View Error Details"):
+            with st.expander("🔍 View Error Details", expanded=True):
                 st.code(error_desc)
                 
                 # Provide specific fixes based on error type
@@ -143,11 +143,9 @@ def exchange_code_for_token(code: str, client_id: str, client_secret: str,
                     st.warning(f"""
                     **Redirect URI Mismatch**
                     
-                    The redirect_uri must match EXACTLY in:
-                    1. Azure AD App Registration → Authentication
-                    2. Streamlit secrets configuration
+                    The redirect_uri sent to Azure doesn't match what's registered.
                     
-                    Current redirect_uri: `{redirect_uri}`
+                    **Current redirect_uri:** `{redirect_uri}`
                     
                     **Steps to fix:**
                     1. Go to Azure Portal → App Registrations → Your App
@@ -221,7 +219,7 @@ def get_user_info(access_token: str) -> Optional[Dict]:
 
 
 def render_login():
-    """Render login UI with proper OAuth flow"""
+    """Render login UI with DEBUG information"""
     
     # Get Azure AD config
     try:
@@ -229,11 +227,10 @@ def render_login():
         client_secret = st.secrets.azure_ad.client_secret
         tenant_id = st.secrets.azure_ad.get('tenant_id', 'common')
         
-        # CRITICAL: Get the base URL properly
-        # The redirect_uri should be just the base URL, no path
+        # Get redirect URI and clean it
         redirect_uri_config = st.secrets.azure_ad.get('redirect_uri', '')
         
-        # Ensure redirect_uri ends without trailing slash
+        # Clean the redirect_uri
         redirect_uri = redirect_uri_config.rstrip('/')
         
         # Validate configuration
@@ -364,7 +361,7 @@ def render_login():
             st.rerun()
     
     else:
-        # Show login page and redirect to Microsoft
+        # Show login page with DEBUG information
         from urllib.parse import quote
         
         # Build OAuth authorization URL
@@ -381,15 +378,15 @@ def render_login():
             f"redirect_uri={quote(redirect_uri, safe='')}&"
             f"response_mode=query&"
             f"scope={quote(scopes)}&"
-            f"prompt=select_account"  # Force account selection
+            f"prompt=select_account"
         )
         
         # Display login page
         st.markdown("""
         <style>
         .login-container {
-            max-width: 500px;
-            margin: 100px auto;
+            max-width: 600px;
+            margin: 50px auto;
             padding: 40px;
             background: white;
             border-radius: 12px;
@@ -428,6 +425,30 @@ def render_login():
             box-shadow: 0 4px 15px rgba(0,120,212,0.5);
             transform: translateY(-2px);
         }
+        .debug-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .debug-item {
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        .debug-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .debug-value {
+            color: #0078D4;
+            word-break: break-all;
+        }
         </style>
         """, unsafe_allow_html=True)
         
@@ -440,55 +461,97 @@ def render_login():
             <a href="{auth_url}" target="_self" class="ms-button">
                 🔷 Sign in with Microsoft
             </a>
-            <br><br>
-            <p style="font-size: 12px; color: #999; margin-top: 30px;">
-                Enterprise SSO Authentication<br>
-                Secure • Fast • Reliable
-            </p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Configuration check section (collapsible)
-        with st.expander("🔧 Troubleshooting Guide"):
-            st.markdown(f"""
-            **Current Configuration:**
-            - Client ID: `{client_id[:10]}...`
-            - Tenant ID: `{tenant_id}`
-            - Redirect URI: `{redirect_uri}`
+        # DEBUG INFORMATION - Always visible for troubleshooting
+        st.markdown("---")
+        st.markdown("### 🔍 DEBUG INFORMATION")
+        
+        st.markdown(f"""
+        <div class="debug-box">
+            <div class="debug-item">
+                <span class="debug-label">Client ID:</span><br>
+                <span class="debug-value">{client_id[:10]}...{client_id[-10:]}</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Tenant ID:</span><br>
+                <span class="debug-value">{tenant_id}</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Redirect URI (from secrets):</span><br>
+                <span class="debug-value">{redirect_uri_config}</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Redirect URI (cleaned, will be sent to Azure):</span><br>
+                <span class="debug-value">{redirect_uri}</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Trailing slash removed?</span><br>
+                <span class="debug-value">{'✅ YES' if redirect_uri != redirect_uri_config else '❌ NO (none found)'}</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">URLs match exactly?</span><br>
+                <span class="debug-value">{'✅ YES' if redirect_uri == redirect_uri_config.rstrip('/') else '❌ NO'}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Critical configuration check
+        st.markdown("### ⚠️ CRITICAL: Azure AD Configuration Required")
+        
+        st.error(f"""
+        **In Azure Portal, your Redirect URI MUST be exactly:**
+        ```
+        {redirect_uri}
+        ```
+        
+        **Steps:**
+        1. Go to Azure Portal → App Registrations → Your App
+        2. Click "Authentication" in left sidebar
+        3. Under "Redirect URIs", ensure this EXACT URL is listed: `{redirect_uri}`
+        4. Scroll down, check "ID tokens" under "Implicit grant and hybrid flows"
+        5. Click Save
+        6. Wait 1-2 minutes for changes to propagate
+        7. Come back here and click "Sign in with Microsoft" again
+        """)
+        
+        # Show the actual OAuth URL being used
+        with st.expander("🔗 View Full OAuth URL (for advanced debugging)"):
+            st.code(auth_url, language="text")
+            st.caption("This is the exact URL you'll be redirected to when clicking 'Sign in with Microsoft'")
+        
+        # Troubleshooting guide
+        with st.expander("🛠️ Common Issues & Solutions"):
+            st.markdown("""
+            ### Issue 1: "Refused to Connect"
+            **Cause:** Redirect URI mismatch
             
-            **Azure AD App Registration Checklist:**
+            **Solution:**
+            - Verify the redirect URI above matches EXACTLY in Azure AD
+            - No trailing slash in either place
+            - Must be HTTPS, not HTTP
             
-            1. **Redirect URI Configuration:**
-               - Go to Azure Portal → App Registrations → Your App
-               - Navigate to Authentication
-               - Add Web platform if not already added
-               - Add this EXACT URL: `{redirect_uri}`
-               - Ensure no trailing slash
+            ### Issue 2: Page Loads but Still Fails
+            **Cause:** Client secret or tenant ID issue
             
-            2. **Token Configuration:**
-               - Under Authentication, scroll to "Implicit grant and hybrid flows"
-               - Check "ID tokens (used for implicit and hybrid flows)"
+            **Solution:**
+            - Check client secret is not expired in Azure AD
+            - Verify tenant_id is correct ("common" for multitenant)
             
-            3. **API Permissions:**
-               - Go to API permissions
-               - Ensure these are added:
-                 - Microsoft Graph → User.Read (Delegated)
-                 - openid, profile, email
+            ### Issue 3: Blank Page or Timeout
+            **Cause:** Network or Azure AD service issue
             
-            4. **Client Secret:**
-               - Go to Certificates & secrets
-               - Ensure client secret is not expired
-               - Secret value must match what's in Streamlit secrets
+            **Solution:**
+            - Check your internet connection
+            - Try a different browser
+            - Clear browser cache
+            - Check Azure AD service status
             
-            5. **Supported Account Types:**
-               - For multitenant: "Accounts in any organizational directory"
-               - Tenant ID should be "common"
-            
-            **Common Issues:**
-            - ❌ "Redirect URI mismatch" → Check exact URL match
-            - ❌ "Invalid client" → Check client secret
-            - ❌ "Refused to connect" → Check redirect URI and HTTPS
-            - ❌ "CORS error" → Ensure redirect_uri matches exactly
+            ### Need More Help?
+            1. Take a screenshot of the DEBUG INFORMATION above
+            2. Take a screenshot of Azure AD → Authentication settings
+            3. Compare the redirect URIs - they must match EXACTLY
             """)
         
         st.stop()
