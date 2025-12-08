@@ -266,20 +266,7 @@ def get_user_info(access_token: str) -> Optional[Dict]:
 
 
 def render_login():
-    """Render login UI - Production Version"""
-    
-    st.title("🔐 CloudIDP Sign In")
-    st.caption("Secure authentication with Azure Active Directory")
-    
-    # Browser compatibility notice
-    st.info("""
-    ℹ️ **Browser Compatibility**
-    
-    **Recommended:** Google Chrome or Mozilla Firefox
-    
-    **Microsoft Edge:** May require additional cookie configuration. If you experience login issues, 
-    please use Chrome or Firefox for best experience.
-    """)
+    """Render login UI - Auto-redirect to Microsoft"""
     
     # Get Azure AD config
     try:
@@ -384,66 +371,49 @@ def render_login():
                         st.rerun()
     
     else:
-        # Show login button
-        st.markdown("---")
-        st.markdown("""
-        ### 🔐 Sign In Required
+        # No callback code - redirect directly to Microsoft login
+        from urllib.parse import quote
         
-        Please sign in with your Microsoft account to access the CloudIDP platform.
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
         
-        **Supported Accounts:**
-        - Azure Active Directory (Enterprise)
-        - Office 365 (Business)
-        - Organizational Microsoft Accounts
-        """)
+        # Construct OAuth URL with proper scope encoding
+        scopes = "openid profile email https://graph.microsoft.com/User.Read"
         
+        auth_url = (
+            f"{authority}/oauth2/v2.0/authorize?"
+            f"client_id={client_id}&"
+            f"response_type=code&"
+            f"redirect_uri={quote(redirect_uri, safe='')}&"
+            f"scope={scopes.replace(' ', '%20')}&"
+            f"response_mode=query"
+        )
+        
+        # Show brief message while redirecting
+        st.title("🔐 CloudIDP Sign In")
+        st.info("🔄 Redirecting to Microsoft login...")
+        
+        # Auto-redirect to Microsoft
+        st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
+        
+        # Fallback button in case auto-redirect doesn't work
         st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="text-align: center;">
+            <a href="{auth_url}" target="_self" style="
+                display: inline-block;
+                background-color: #0078d4;
+                color: white;
+                padding: 12px 30px;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 16px;">
+                🔷 If not redirected, click here
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
         
-        if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary", key="login_btn"):
-            from urllib.parse import urlencode, quote
-            
-            authority = f"https://login.microsoftonline.com/{tenant_id}"
-            
-            # Construct OAuth URL with proper scope encoding
-            scopes = "openid profile email https://graph.microsoft.com/User.Read"
-            
-            auth_url = (
-                f"{authority}/oauth2/v2.0/authorize?"
-                f"client_id={client_id}&"
-                f"response_type=code&"
-                f"redirect_uri={quote(redirect_uri, safe='')}&"
-                f"scope={scopes.replace(' ', '%20')}&"
-                f"response_mode=query"
-            )
-            
-            # Show authentication in progress
-            st.info("🔄 **Redirecting to Microsoft login...**")
-            
-            # Provide direct clickable link for reliability
-            st.markdown(f"""
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{auth_url}" target="_self" style="
-                    display: inline-block;
-                    background-color: #0078d4;
-                    color: white;
-                    padding: 15px 40px;
-                    text-decoration: none;
-                    border-radius: 6px;
-                    font-weight: bold;
-                    font-size: 18px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                    transition: background-color 0.3s;">
-                    🔷 Continue to Microsoft Sign In
-                </a>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.caption("If you're not redirected automatically, click the button above")
-            
-            # Also attempt auto-redirect
-            st.markdown(f'<meta http-equiv="refresh" content="1;url={auth_url}">', unsafe_allow_html=True)
-            
-            st.stop()
+        st.stop()
 
 
 __all__ = ['RoleManager', 'require_permission', 'SimpleUserManager', 'render_login']
