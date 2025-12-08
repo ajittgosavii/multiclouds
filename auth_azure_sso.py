@@ -266,10 +266,20 @@ def get_user_info(access_token: str) -> Optional[Dict]:
 
 
 def render_login():
-    """Render login UI with debug information"""
+    """Render login UI - Production Version"""
     
-    st.title("🔐 Sign In - DEBUG MODE")
+    st.title("🔐 CloudIDP Sign In")
     st.caption("Secure authentication with Azure Active Directory")
+    
+    # Browser compatibility notice
+    st.info("""
+    ℹ️ **Browser Compatibility**
+    
+    **Recommended:** Google Chrome or Mozilla Firefox
+    
+    **Microsoft Edge:** May require additional cookie configuration. If you experience login issues, 
+    please use Chrome or Firefox for best experience.
+    """)
     
     # Get Azure AD config
     try:
@@ -277,37 +287,6 @@ def render_login():
         client_secret = st.secrets.azure_ad.client_secret
         tenant_id = st.secrets.azure_ad.get('tenant_id', 'common')
         redirect_uri = st.secrets.azure_ad.get('redirect_uri', '')
-        
-        # SHOW CONFIGURATION PROMINENTLY
-        st.warning("🔍 **DEBUG MODE - Configuration Display**")
-        st.write("**Current Azure AD Configuration:**")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Client ID", f"{client_id[:10]}...{client_id[-10:]}")
-            st.metric("Tenant ID", tenant_id)
-        with col2:
-            st.metric("Redirect URI", redirect_uri)
-            st.metric("Client Secret", f"{'*' * 20} (exists)")
-        
-        # Show what the authorization URL will look like
-        st.write("---")
-        st.write("**Authorization URL that will be used:**")
-        from urllib.parse import quote
-        authority = f"https://login.microsoftonline.com/{tenant_id}"
-        scopes = "openid profile email https://graph.microsoft.com/User.Read"
-        test_url = (
-            f"{authority}/oauth2/v2.0/authorize?"
-            f"client_id={client_id}&"
-            f"response_type=code&"
-            f"redirect_uri={quote(redirect_uri, safe='')}&"
-            f"scope={scopes.replace(' ', '%20')}&"
-            f"response_mode=query"
-        )
-        st.code(test_url, language=None)
-        
-        st.info("⬆️ **Copy the URL above and test it in a new browser tab!**")
-        st.write("---")
         
     except Exception as e:
         st.error(f"❌ Azure AD configuration missing: {str(e)}")
@@ -406,21 +385,26 @@ def render_login():
     
     else:
         # Show login button
-        st.info("""
-        ℹ️ **Secure Authentication**
+        st.markdown("---")
+        st.markdown("""
+        ### 🔐 Sign In Required
         
-        Sign in with your Microsoft account to access CloudIDP.
+        Please sign in with your Microsoft account to access the CloudIDP platform.
         
-        Enterprise Azure AD, Office 365, and personal Microsoft accounts supported.
+        **Supported Accounts:**
+        - Azure Active Directory (Enterprise)
+        - Office 365 (Business)
+        - Organizational Microsoft Accounts
         """)
         
-        if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary", key="login_btn"):
             from urllib.parse import urlencode, quote
             
             authority = f"https://login.microsoftonline.com/{tenant_id}"
             
-            # Explicitly construct URL with proper OAuth scope encoding
-            # OAuth requires space-separated scopes, encoded as %20 not +
+            # Construct OAuth URL with proper scope encoding
             scopes = "openid profile email https://graph.microsoft.com/User.Read"
             
             auth_url = (
@@ -428,34 +412,36 @@ def render_login():
                 f"client_id={client_id}&"
                 f"response_type=code&"
                 f"redirect_uri={quote(redirect_uri, safe='')}&"
-                f"scope={scopes.replace(' ', '%20')}&"  # Space-separated, manually encode
+                f"scope={scopes.replace(' ', '%20')}&"
                 f"response_mode=query"
             )
             
-            # Show debug information
-            st.success("✅ **Login button clicked!**")
-            st.write("**Full Authorization URL:**")
-            st.code(auth_url, language=None)
+            # Show authentication in progress
+            st.info("🔄 **Redirecting to Microsoft login...**")
             
-            st.warning("⚠️ **IMPORTANT: Click the link below (don't wait for auto-redirect)**")
-            
-            # Provide direct clickable link - this is the most reliable method
+            # Provide direct clickable link for reliability
             st.markdown(f"""
-            <a href="{auth_url}" target="_self" style="
-                display: inline-block;
-                background-color: #0078d4;
-                color: white;
-                padding: 12px 24px;
-                text-decoration: none;
-                border-radius: 4px;
-                font-weight: bold;
-                font-size: 16px;
-                margin: 10px 0;">
-                🔷 Click Here to Sign In
-            </a>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{auth_url}" target="_self" style="
+                    display: inline-block;
+                    background-color: #0078d4;
+                    color: white;
+                    padding: 15px 40px;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    font-weight: bold;
+                    font-size: 18px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    transition: background-color 0.3s;">
+                    🔷 Continue to Microsoft Sign In
+                </a>
+            </div>
             """, unsafe_allow_html=True)
             
-            st.info("👆 **Click the blue button above to login**")
+            st.caption("If you're not redirected automatically, click the button above")
+            
+            # Also attempt auto-redirect
+            st.markdown(f'<meta http-equiv="refresh" content="1;url={auth_url}">', unsafe_allow_html=True)
             
             st.stop()
 
