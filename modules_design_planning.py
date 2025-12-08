@@ -17,6 +17,7 @@ import os
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from enum import Enum
+from auth_azure_sso import require_permission
 
 # ============================================================================
 # NEW ENGINE IMPORTS (ADDED FOR AI SIZING & COST ANALYSIS)
@@ -1189,7 +1190,6 @@ class DesignPlanningModule:
                 
                 try:
                     import anthropic
-                    from auth_azure_sso import require_permission
                     
                     prompt = f"""You are an AWS Well-Architected Framework expert. Answer this architecture question with specific, actionable recommendations:
 

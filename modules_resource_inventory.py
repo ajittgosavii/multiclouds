@@ -24,6 +24,7 @@ from config_settings import AppConfig
 from core_account_manager import get_account_manager
 from core_session_manager import SessionManager
 from utils_helpers import Helpers
+from auth_azure_sso import require_permission
 import json
 import os
 
@@ -1270,7 +1271,6 @@ aws lambda tag-resource --resource arn:aws:lambda:us-east-1:123456789:function:l
         """Enhanced resource dependencies with application selector"""
         
         import pandas as pd
-        from auth_azure_sso import require_permission
         
         st.markdown("### 🔗 Resource Dependencies & Relationships")
         st.caption("Visualize connections between resources - Select an application to view its dependency tree")
