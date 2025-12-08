@@ -354,7 +354,7 @@ def render_login():
             st.rerun()
     
     else:
-        # Show login page with WORKING button
+        # Auto-redirect to Microsoft login - NO login page shown
         from urllib.parse import quote
         
         # Build OAuth authorization URL
@@ -374,10 +374,10 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Display login page with SIMPLE WORKING BUTTON
+        # Show brief message before redirect
         st.markdown("""
         <style>
-        .login-container {
+        .redirect-container {
             max-width: 500px;
             margin: 100px auto;
             padding: 40px;
@@ -386,62 +386,41 @@ def render_login():
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             text-align: center;
         }
-        .logo {
-            font-size: 64px;
-            margin-bottom: 20px;
+        .spinner {
+            font-size: 48px;
+            animation: spin 1s linear infinite;
         }
-        .title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #2E86DE;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 30px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         </style>
         """, unsafe_allow_html=True)
         
         st.markdown("""
-        <div class="login-container">
-            <div class="logo">☁️</div>
-            <div class="title">CloudIDP</div>
-            <div class="subtitle">Multi-Cloud Infrastructure Intelligence Platform</div>
+        <div class="redirect-container">
+            <div class="spinner">🔄</div>
+            <h2 style="color: #2E86DE; margin-top: 20px;">Redirecting to Microsoft Login...</h2>
+            <p style="color: #666;">Please wait</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Use Streamlit's link_button - THIS IS THE KEY FIX!
-        st.link_button(
-            label="🔷 Sign in with Microsoft",
-            url=auth_url,
-            use_container_width=False
-        )
+        # Auto-redirect using JavaScript
+        st.markdown(f"""
+        <script>
+            window.location.href = "{auth_url}";
+        </script>
+        """, unsafe_allow_html=True)
         
-        st.markdown("""
+        # Also provide manual link in case JavaScript is disabled
+        st.markdown(f"""
         <div style="text-align: center; margin-top: 30px;">
-            <p style="font-size: 12px; color: #999;">
-                Enterprise SSO Authentication<br>
-                Secure • Fast • Reliable<br>
-                Supports work, school, and personal Microsoft accounts
+            <p style="font-size: 14px; color: #999;">
+                If you are not redirected automatically, 
+                <a href="{auth_url}" style="color: #0078D4; font-weight: bold;">click here</a>
             </p>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Configuration info in expander
-        with st.expander("🔧 Configuration Info"):
-            st.markdown(f"""
-            **Current Configuration:**
-            - Tenant ID: `{tenant_id}`
-            - Redirect URI: `{redirect_uri}`
-            - Account types: Work, school, and personal Microsoft accounts
-            
-            **If sign-in fails:**
-            1. Ensure Azure AD app supports personal Microsoft accounts
-            2. Check that redirect URI matches exactly in Azure AD
-            3. Verify client secret is not expired
-            """)
         
         st.stop()
 
