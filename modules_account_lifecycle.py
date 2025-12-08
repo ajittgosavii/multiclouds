@@ -29,6 +29,7 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+from auth_azure_sso import require_permission
 import json
 import os
 
@@ -153,7 +154,6 @@ Respond ONLY with valid JSON."""
             return json.loads(response_text)
         except:
             import re
-from auth_azure_sso import require_permission
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group())
