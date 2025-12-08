@@ -374,52 +374,125 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Show brief message before redirect
-        st.markdown("""
+        # Show branded redirect page with logo
+        # Using custom logo and meta refresh for reliable redirect
+        st.markdown(f"""
+        <meta http-equiv="refresh" content="0;url={auth_url}">
         <style>
-        .redirect-container {
-            max-width: 500px;
-            margin: 100px auto;
-            padding: 40px;
+        .redirect-container {{
+            max-width: 600px;
+            margin: 80px auto;
+            padding: 50px;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             text-align: center;
-        }
-        .spinner {
-            font-size: 48px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        }}
+        .logo-container {{
+            margin-bottom: 30px;
+        }}
+        .logo {{
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            animation: pulse 1.5s ease-in-out infinite;
+        }}
+        @keyframes pulse {{
+            0%, 100% {{ transform: scale(1); opacity: 1; }}
+            50% {{ transform: scale(1.05); opacity: 0.8; }}
+        }}
+        .title {{
+            font-size: 28px;
+            font-weight: bold;
+            color: #0078D4;
+            margin: 20px 0 10px 0;
+        }}
+        .subtitle {{
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }}
+        .loading-dots {{
+            font-size: 24px;
+            color: #0078D4;
+            letter-spacing: 4px;
+            animation: blink 1.4s infinite;
+        }}
+        @keyframes blink {{
+            0%, 20% {{ opacity: 1; }}
+            50% {{ opacity: 0.5; }}
+            100% {{ opacity: 1; }}
+        }}
+        .fallback-link {{
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }}
+        .fallback-link a {{
+            color: #0078D4;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 16px;
+        }}
+        .fallback-link a:hover {{
+            text-decoration: underline;
+        }}
         </style>
-        """, unsafe_allow_html=True)
         
-        st.markdown("""
         <div class="redirect-container">
-            <div class="spinner">🔄</div>
-            <h2 style="color: #2E86DE; margin-top: 20px;">Redirecting to Microsoft Login...</h2>
-            <p style="color: #666;">Please wait</p>
+            <div class="logo-container">
+                <svg class="logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Cloud brain logo -->
+                    <!-- Outer cloud shape -->
+                    <path d="M50 100 Q30 100 30 80 Q30 60 50 60 Q50 40 70 40 Q90 40 90 60 Q110 60 110 40 Q130 40 130 60 Q150 60 150 80 Q170 80 170 100 Q170 120 150 120 Q150 140 130 140 Q110 140 110 120 Q90 120 90 140 Q70 140 70 120 Q50 120 50 100 Z" 
+                          fill="none" 
+                          stroke="#0078D4" 
+                          stroke-width="6"/>
+                    
+                    <!-- Left brain (blue) -->
+                    <path d="M75 80 Q75 70 85 70 Q85 80 85 90 L85 95 Q80 95 80 90 Q75 90 75 95 Q70 95 70 90 Q70 80 75 80 Z"
+                          fill="#4FC3F7"/>
+                    <path d="M65 100 Q70 100 75 95 Q75 105 70 105 Q65 105 65 100 Z"
+                          fill="#29B6F6"/>
+                    
+                    <!-- Right brain top (green) -->
+                    <path d="M115 70 Q120 70 120 75 Q125 75 125 80 Q125 90 120 90 Q115 90 115 85 Q115 75 115 70 Z"
+                          fill="#66BB6A"/>
+                    <path d="M115 85 Q120 85 120 95 Q115 95 115 90 Z"
+                          fill="#4CAF50"/>
+                    
+                    <!-- Right brain bottom (orange/yellow) -->
+                    <path d="M115 100 Q120 100 125 105 Q125 115 120 115 Q115 115 115 110 Q110 110 110 105 Q110 100 115 100 Z"
+                          fill="#FFA726"/>
+                    <path d="M115 110 Q120 110 120 120 Q115 120 115 115 Z"
+                          fill="#FF9800"/>
+                    
+                    <!-- Dividing line -->
+                    <line x1="100" y1="65" x2="100" y2="125" 
+                          stroke="#0078D4" 
+                          stroke-width="4"/>
+                </svg>
+            </div>
+            
+            <div class="title">Redirecting to Microsoft Login</div>
+            <div class="subtitle">Multi Intelligence Cloud Platform</div>
+            <div class="loading-dots">• • •</div>
+            
+            <div class="fallback-link">
+                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+                    If you are not redirected automatically
+                </p>
+                <a href="{auth_url}">click here to continue</a>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
         
-        # Auto-redirect using JavaScript
-        st.markdown(f"""
         <script>
-            window.location.href = "{auth_url}";
+            // Fallback JavaScript redirect
+            setTimeout(function() {{
+                window.location.href = "{auth_url}";
+            }}, 100);
         </script>
-        """, unsafe_allow_html=True)
-        
-        # Also provide manual link in case JavaScript is disabled
-        st.markdown(f"""
-        <div style="text-align: center; margin-top: 30px;">
-            <p style="font-size: 14px; color: #999;">
-                If you are not redirected automatically, 
-                <a href="{auth_url}" style="color: #0078D4; font-weight: bold;">click here</a>
-            </p>
-        </div>
         """, unsafe_allow_html=True)
         
         st.stop()
