@@ -11,6 +11,7 @@ from config_settings import AppConfig
 from core_account_manager import get_account_manager
 from core_session_manager import SessionManager
 from utils_helpers import Helpers
+from auth_azure_sso import require_permission
 
 def render_light_metric_FIXED(label: str, value: str, icon: str = ""):
     """
@@ -56,7 +57,6 @@ class DashboardModule:
     
     @staticmethod
     @require_permission('view_dashboard')
-
     def render():
         """Render dashboard"""
         
@@ -262,7 +262,6 @@ class DashboardModule:
                 
                 if session:
                     from aws_ec2 import EC2Service
-from auth_azure_sso import require_permission
                     ec2 = EC2Service(session.session, acc.regions[0])
                     result = ec2.list_instances()
                     

@@ -39,7 +39,8 @@ class Navigation:
             {"key": "FinOps & Cost", "icon": "💰", "label": "FinOps"},
             {"key": "Account Lifecycle", "icon": "📄", "label": "Lifecycle"},
             {"key": "Developer Experience", "icon": "👨‍💻", "label": "DevEx"},
-            {"key": "AI Assistant", "icon": "🤖", "label": "AI Assistant"}
+            {"key": "AI Assistant", "icon": "🤖", "label": "AI Assistant"},
+            {"key": "Admin Panel", "icon": "👨‍💼", "label": "Admin"}
         ]
         
         # Display current cloud provider mode
@@ -229,6 +230,14 @@ class Navigation:
             except Exception as e:
                 st.error(f"Error loading AI Assistant: {str(e)}")
         
+        # Module 16: Admin Panel
+        elif active_module == "Admin Panel":
+            try:
+                from modules_admin_panel import AdminPanelModule
+                AdminPanelModule.render()
+            except Exception as e:
+                st.error(f"Error loading Admin Panel: {str(e)}")
+        
         # Default fallback
         else:
             st.warning(f"⚠️ Module '{active_module}' is under development for AWS")
@@ -254,7 +263,8 @@ class Navigation:
             "FinOps & Cost": "azure_modules_finops_and_cost",
             "Account Lifecycle": "azure_modules_subscription_management",
             "Developer Experience": "azure_modules_developer_experience",
-            "AI Assistant": "azure_modules_ai_assistant"
+            "AI Assistant": "azure_modules_ai_assistant",
+            "Admin Panel": "modules_admin_panel"  # Uses AWS module
         }
         
         # Get the appropriate module file
@@ -295,7 +305,8 @@ class Navigation:
             "FinOps & Cost": "gcp_modules_finops_cost",
             "Account Lifecycle": "gcp_modules_project_management",
             "Developer Experience": "gcp_modules_developer_experience",
-            "AI Assistant": "gcp_modules_ai_assistant"
+            "AI Assistant": "gcp_modules_ai_assistant",
+            "Admin Panel": "modules_admin_panel"  # Uses AWS module
         }
         
         # Get the appropriate module file
