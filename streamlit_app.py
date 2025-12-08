@@ -47,19 +47,23 @@ if AUTH_ENABLED:
     
     # User is authenticated - get user info
     current_user = st.session_state.get('user_info')
+    
+    # If authenticated but no user_info, something went wrong - show login again
+    if not current_user:
+        st.warning("⚠️ Session incomplete. Please login again.")
+        st.session_state.authenticated = False
+        render_login()
+        st.stop()
+    
     db_manager = get_database_manager()
     
     # Initialize role manager
     if 'role_manager' not in st.session_state:
         st.session_state.role_manager = RoleManager()
     
-    # Set default cloud provider from user preferences if available
+    # Set default cloud provider
     if 'cloud_provider' not in st.session_state:
-        if current_user:
-            # Could load from database preferences here
-            st.session_state.cloud_provider = 'AWS'
-        else:
-            st.session_state.cloud_provider = 'AWS'
+        st.session_state.cloud_provider = 'AWS'
 else:
     # No authentication - set defaults
     current_user = None
@@ -280,9 +284,12 @@ st.markdown("""
 # ==================================================================================
 # USER GREETING (IF AUTHENTICATED)
 # ==================================================================================
-if AUTH_ENABLED and current_user:
-    st.markdown(f"### 👋 Welcome, {current_user.get('given_name', 'User')}!")
-    st.caption(f"Logged in as: {current_user.get('email')}")
+if AUTH_ENABLED and current_user and isinstance(current_user, dict):
+    user_name = current_user.get('given_name') or current_user.get('name') or 'User'
+    user_email = current_user.get('email', '')
+    st.markdown(f"### 👋 Welcome, {user_name}!")
+    if user_email:
+        st.caption(f"Logged in as: {user_email}")
     st.markdown("---")
 
 # ==================================================================================
@@ -338,7 +345,7 @@ def main():
     # ==================================================================================
     with st.sidebar:
         # Show user profile at top of sidebar (if authenticated)
-        if AUTH_ENABLED and current_user:
+        if AUTH_ENABLED and current_user and isinstance(current_user, dict):
             st.markdown("## 👤 User Profile")
             st.markdown("### 👤")
             st.markdown(f"**{current_user.get('name', 'Unknown User')}**")
@@ -420,7 +427,7 @@ def main():
         st.caption(f"{cloud_icon.get(cloud_provider, '☁️')} {cloud_provider} Mode")
     
     with col3:
-        if AUTH_ENABLED and current_user:
+        if AUTH_ENABLED and current_user and isinstance(current_user, dict):
             user_role = current_user.get('role', 'viewer')
             st.caption(f"👤 {user_role.title()} | CloudIDP v3.0")
         else:
