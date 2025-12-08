@@ -394,6 +394,7 @@ def render_login():
         .logo {{
             font-size: 72px;
             line-height: 1;
+            filter: invert(44%) sepia(82%) saturate(2890%) hue-rotate(188deg) brightness(95%) contrast(101%);
         }}
         .title {{
             font-size: 36px;
