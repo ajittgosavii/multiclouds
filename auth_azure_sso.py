@@ -266,9 +266,9 @@ def get_user_info(access_token: str) -> Optional[Dict]:
 
 
 def render_login():
-    """Render login UI"""
+    """Render login UI with debug information"""
     
-    st.title("🔐 Sign In")
+    st.title("🔐 Sign In - DEBUG MODE")
     st.caption("Secure authentication with Azure Active Directory")
     
     # Get Azure AD config
@@ -277,6 +277,36 @@ def render_login():
         client_secret = st.secrets.azure_ad.client_secret
         tenant_id = st.secrets.azure_ad.get('tenant_id', 'common')
         redirect_uri = st.secrets.azure_ad.get('redirect_uri', '')
+        
+        # SHOW CONFIGURATION PROMINENTLY
+        st.warning("🔍 **DEBUG MODE - Configuration Display**")
+        st.write("**Current Azure AD Configuration:**")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Client ID", f"{client_id[:10]}...{client_id[-10:]}")
+            st.metric("Tenant ID", tenant_id)
+        with col2:
+            st.metric("Redirect URI", redirect_uri)
+            st.metric("Client Secret", f"{'*' * 20} (exists)")
+        
+        # Show what the authorization URL will look like
+        st.write("---")
+        st.write("**Authorization URL that will be used:**")
+        from urllib.parse import urlencode
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
+        auth_params = {
+            'client_id': client_id,
+            'response_type': 'code',
+            'redirect_uri': redirect_uri,
+            'scope': 'openid profile email User.Read',
+            'response_mode': 'query'
+        }
+        test_url = f"{authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
+        st.code(test_url, language=None)
+        
+        st.info("⬆️ **Copy the URL above and test it in a new browser tab!**")
+        st.write("---")
         
     except Exception as e:
         st.error(f"❌ Azure AD configuration missing: {str(e)}")
@@ -380,18 +410,8 @@ def render_login():
         
         Sign in with your Microsoft account to access CloudIDP.
         
-        Enterprise Azure AD and Office 365 accounts supported.
+        Enterprise Azure AD, Office 365, and personal Microsoft accounts supported.
         """)
-        
-        # Show current configuration for debugging
-        with st.expander("🔍 Debug: View Current Configuration", expanded=False):
-            st.write("**Azure AD Configuration:**")
-            st.code(f"""
-Client ID: {client_id[:10]}...{client_id[-10:]}
-Tenant ID: {tenant_id}
-Redirect URI: {redirect_uri}
-Authority: https://login.microsoftonline.com/{tenant_id}
-            """)
         
         if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary"):
             from urllib.parse import urlencode
@@ -408,24 +428,23 @@ Authority: https://login.microsoftonline.com/{tenant_id}
             
             auth_url = f"{authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
             
-            # Show the exact URL being used
-            st.info("🔍 **Debug Information:**")
-            st.write("Authorization URL being used:")
+            # Show debug information
+            st.success("✅ **Login button clicked!**")
+            st.write("**Redirecting to this URL:**")
             st.code(auth_url, language=None)
-            st.write("---")
-            st.write("**If the page doesn't redirect automatically:**")
+            
+            st.warning("⚠️ **If redirect doesn't work:**")
             st.write("1. Copy the URL above")
-            st.write("2. Open a new tab")
-            st.write("3. Paste and go to that URL")
-            st.write("4. Or click the link below:")
+            st.write("2. Open it in a new browser tab")
+            st.write("3. Check if Microsoft login page loads")
             
-            # Provide a clickable link
-            st.markdown(f'<a href="{auth_url}" target="_self" style="font-size: 18px; color: #0066cc;">👉 Click here to login</a>', unsafe_allow_html=True)
+            # Provide direct link
+            st.markdown(f'**Direct link:** [Click here to login]({auth_url})', unsafe_allow_html=True)
             
-            # Also try meta refresh redirect
+            # Also try auto redirect
             st.markdown(f"""
-            <meta http-equiv="refresh" content="3;url={auth_url}">
-            <p><em>Attempting to redirect in 3 seconds...</em></p>
+            <meta http-equiv="refresh" content="2;url={auth_url}">
+            <p><em>Auto-redirecting in 2 seconds...</em></p>
             """, unsafe_allow_html=True)
             
             st.stop()
