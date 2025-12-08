@@ -187,16 +187,21 @@ input, textarea {
 
 /* ===== TABS ===== */
 .stTabs [data-baseweb="tab-list"] {
-    background-color: white !important;
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%) !important;
+    padding: 10px !important;
+    border-radius: 8px !important;
 }
 
 .stTabs [data-baseweb="tab"] {
-    color: black !important;
+    color: white !important;
+    font-weight: 500 !important;
 }
 
 .stTabs [aria-selected="true"] {
-    color: #2E86DE !important;
-    border-bottom: 2px solid #2E86DE !important;
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
 }
 
 /* ===== METRICS ===== */
@@ -309,7 +314,7 @@ div[data-testid="column"] button[kind="secondary"]:hover {
 # Main header - centered with WHITE text
 st.markdown("""
 <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-    <h1 class="header-title" style="color: #FFFFFF !important; margin: 0; font-weight: 600; text-shadow: none;">☁️ CloudIDP v3.0 Tri-Cloud Platform</h1>
+    <h1 class="header-title" style="color: #FFFFFF !important; margin: 0; font-weight: 600; text-shadow: none;">Multi Cloud Intelligence Platform</h1>
     <p style="color: rgba(255,255,255,0.95) !important; margin: 5px 0 0 0; font-size: 18px; text-shadow: none;">Enterprise Multi-Cloud Infrastructure Development Platform</p>
 </div>
 """, unsafe_allow_html=True)
@@ -343,7 +348,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     is_active = st.session_state.cloud_provider == 'AWS'
     
-    if st.button("🔸 Select AWS", key="aws_btn", use_container_width=True, 
+    if st.button("Select AWS", key="aws_btn", use_container_width=True, 
                  type="primary" if is_active else "secondary"):
         st.session_state.cloud_provider = 'AWS'
         
@@ -377,7 +382,7 @@ with col1:
 with col2:
     is_active = st.session_state.cloud_provider == 'Azure'
     
-    if st.button("🔹 Select Azure", key="azure_btn", use_container_width=True,
+    if st.button("Select Azure", key="azure_btn", use_container_width=True,
                  type="primary" if is_active else "secondary"):
         st.session_state.cloud_provider = 'Azure'
         
@@ -422,7 +427,7 @@ with col2:
 with col3:
     is_active = st.session_state.cloud_provider == 'GCP'
     
-    if st.button("🔷 Select GCP", key="gcp_btn", use_container_width=True,
+    if st.button("Select GCP", key="gcp_btn", use_container_width=True,
                  type="primary" if is_active else "secondary"):
         st.session_state.cloud_provider = 'GCP'
         
@@ -563,15 +568,14 @@ def main():
         st.caption(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     with col2:
-        cloud_icon = {"AWS": "☁️", "Azure": "🔷", "GCP": "🔴"}
-        st.caption(f"{cloud_icon.get(cloud_provider, '☁️')} {cloud_provider} Mode")
+        st.caption(f"{cloud_provider} Mode")
     
     with col3:
         if AUTH_ENABLED and current_user and isinstance(current_user, dict):
             user_role = current_user.get('role', 'viewer')
-            st.caption(f"👤 {user_role.title()} | CloudIDP v3.0")
+            st.caption(f"👤 {user_role.title()} | MCIP")
         else:
-            st.caption(f"🌐 CloudIDP v3.0 Tri-Cloud Platform")
+            st.caption(f"Multi Cloud Intelligence Platform")
 
 if __name__ == "__main__":
     main()
