@@ -40,32 +40,42 @@ st.set_page_config(
 # INITIALIZE AUTHENTICATION (IF ENABLED)
 # ==================================================================================
 if AUTH_ENABLED:
-    init_authentication()
-    
-    # Check authentication
-    user_manager = st.session_state.get('user_manager')
-    if not user_manager or not user_manager.is_authenticated():
-        # Show login page and stop
-        render_login_page()
+    try:
+        init_authentication()
+        
+        # Check authentication
+        user_manager = st.session_state.get('user_manager')
+        if not user_manager or not user_manager.is_authenticated():
+            # Show login page and stop
+            render_login_page()
+            st.stop()
+        
+        # Get current user and database manager
+        current_user = user_manager.get_current_user()
+        db_manager = get_database_manager()
+        
+        # Update user in database
+        if current_user and db_manager:
+            db_manager.create_or_update_user(current_user)
+            
+            # Load user preferences
+            user_prefs = db_manager.get_user_preferences(current_user['id'])
+            if 'user_preferences' not in st.session_state:
+                st.session_state.user_preferences = user_prefs
+            
+            # Set default cloud provider from preferences
+            if 'cloud_provider' not in st.session_state:
+                default_cloud = user_prefs.get('default_cloud', 'AWS').upper()
+                st.session_state.cloud_provider = default_cloud
+    except Exception as e:
+        st.error(f"⚠️ Authentication Error: {str(e)}")
+        st.info("Please check your authentication configuration and ensure all auth modules are deployed.")
         st.stop()
-    
-    # Get current user and database manager
-    current_user = user_manager.get_current_user()
-    db_manager = get_database_manager()
-    
-    # Update user in database
-    if current_user and db_manager:
-        db_manager.create_or_update_user(current_user)
-        
-        # Load user preferences
-        user_prefs = db_manager.get_user_preferences(current_user['id'])
-        if 'user_preferences' not in st.session_state:
-            st.session_state.user_preferences = user_prefs
-        
-        # Set default cloud provider from preferences
-        if 'cloud_provider' not in st.session_state:
-            default_cloud = user_prefs.get('default_cloud', 'AWS').upper()
-            st.session_state.cloud_provider = default_cloud
+else:
+    # Authentication disabled - show warning
+    st.warning("⚠️ **Authentication is disabled.** Running in legacy mode. To enable authentication, ensure these files are deployed:\n- auth_azure_sso.py\n- auth_ui_components.py\n- auth_database_firestore.py")
+    current_user = None
+    db_manager = None
 
 # ==================================================================================
 # IMPORT APPLICATION MODULES
@@ -405,10 +415,18 @@ with col2:
     
     st.markdown(f"""
     <div style="border: {border}; background: {bg}; padding: 30px 20px; border-radius: 12px; text-align: center; box-shadow: {shadow}; margin-top: 10px;">
-        <div style="font-size: 56px; color: #0078D4; font-weight: bold; margin-bottom: 12px;">
-            ◆
+        <div style="margin-bottom: 12px;">
+            <svg width="80" height="80" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="azureGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#0078D4;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#00BCF2;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path fill="url(#azureGrad)" d="M86.724 49.508 60.995 79.085H36.897L72.124 16.915h14.6L61.015 49.5zm-36.067 0L32.82 79.085H9.236l13.828-29.577h-13.6L23.309 9.236l27.348 40.272z"/>
+            </svg>
         </div>
-        <div style="font-size: 18px; color: #003366; font-weight: bold; margin-bottom: 4px;">
+        <div style="font-size: 22px; color: #0078D4; font-weight: bold; margin-bottom: 4px; letter-spacing: 2px;">
             AZURE
         </div>
         <div style="font-size: 14px; color: #005A9E; font-weight: 600;">
@@ -437,13 +455,21 @@ with col3:
     
     st.markdown(f"""
     <div style="border: {border}; background: {bg}; padding: 30px 20px; border-radius: 12px; text-align: center; box-shadow: {shadow}; margin-top: 10px;">
-        <div style="font-size: 56px; margin-bottom: 12px;">
-            <span style="color: #4285F4;">●</span>
-            <span style="color: #EA4335;">●</span>
-            <span style="color: #FBBC05;">●</span>
-            <span style="color: #34A853;">●</span>
+        <div style="margin-bottom: 12px;">
+            <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(10,10)">
+                    <!-- Blue hexagon top -->
+                    <path d="M40 0 L60 0 L80 34.64 L60 69.28 L40 69.28 L20 34.64 Z" fill="#4285F4" opacity="0.9"/>
+                    <!-- Green bottom right -->
+                    <path d="M60 69.28 L80 34.64 L60 0" fill="#34A853" opacity="0.8"/>
+                    <!-- Yellow bottom left -->
+                    <path d="M20 34.64 L40 69.28 L60 69.28" fill="#FBBC05" opacity="0.8"/>
+                    <!-- Red top -->
+                    <path d="M40 0 L60 0 L80 34.64" fill="#EA4335" opacity="0.7"/>
+                </g>
+            </svg>
         </div>
-        <div style="font-size: 18px; color: #202124; font-weight: bold; margin-bottom: 4px;">
+        <div style="font-size: 22px; color: #4285F4; font-weight: bold; margin-bottom: 4px; letter-spacing: 2px;">
             GCP
         </div>
         <div style="font-size: 14px; color: #5F6368; font-weight: 600;">
