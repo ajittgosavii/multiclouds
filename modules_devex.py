@@ -11,6 +11,8 @@ class DevExModule:
     """AWS Developer Experience - Practical Coding Helper"""
     
     @staticmethod
+    @require_permission('use_devex')
+
     def render():
         """Render AWS DevEx module"""
         
@@ -1169,6 +1171,7 @@ python -c "import boto3; print(boto3.client('sts').get_caller_identity())"
 **Python code:**
 ```python
 import boto3
+from auth_azure_sso import require_permission
 
 # This will work automatically once credentials are configured
 s3 = boto3.client('s3')

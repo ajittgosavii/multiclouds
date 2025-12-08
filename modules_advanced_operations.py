@@ -15,6 +15,8 @@ class AdvancedOperationsModule:
     """Advanced Operations with comprehensive ML Ops"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Main render method"""
         st.title("⚡ Advanced Operations - AI/ML Ops Platform")
@@ -748,6 +750,7 @@ Experiment is now live. You'll receive daily reports.
             if trigger_condition and remediation_action:
                 with st.spinner("Claude is generating automation rule..."):
                     import time
+from auth_azure_sso import require_permission
                     time.sleep(2)
                     
                     st.success("✅ Auto-remediation rule generated!")

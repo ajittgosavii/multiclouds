@@ -7,11 +7,14 @@ import streamlit as st
 from anthropic_helper import get_anthropic_helper
 from typing import List, Dict
 import json
+from auth_azure_sso import require_permission
 
 class AIAssistantModule:
     """AI-powered assistant for AWS cloud operations"""
     
     @staticmethod
+    @require_permission('view_dashboard')
+
     def render():
         """Render AI assistant interface"""
         

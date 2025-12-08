@@ -431,6 +431,8 @@ class ResourceInventoryModule:
     """Enterprise Resource Inventory with AI-powered insights"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Render resource inventory module - Performance Optimized"""
         
@@ -1268,6 +1270,7 @@ aws lambda tag-resource --resource arn:aws:lambda:us-east-1:123456789:function:l
         """Enhanced resource dependencies with application selector"""
         
         import pandas as pd
+from auth_azure_sso import require_permission
         
         st.markdown("### 🔗 Resource Dependencies & Relationships")
         st.caption("Visualize connections between resources - Select an application to view its dependency tree")

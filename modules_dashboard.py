@@ -55,6 +55,8 @@ class DashboardModule:
     """Main dashboard with enterprise overview"""
     
     @staticmethod
+    @require_permission('view_dashboard')
+
     def render():
         """Render dashboard"""
         
@@ -260,6 +262,7 @@ class DashboardModule:
                 
                 if session:
                     from aws_ec2 import EC2Service
+from auth_azure_sso import require_permission
                     ec2 = EC2Service(session.session, acc.regions[0])
                     result = ec2.list_instances()
                     

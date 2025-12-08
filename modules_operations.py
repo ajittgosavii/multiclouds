@@ -22,6 +22,8 @@ class OperationsModule:
     """AI-Enhanced Operations with Anthropic Claude"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Main render method - ENHANCED with Network & Database Operations"""
         
@@ -934,6 +936,7 @@ Would you like me to execute these fixes automatically?
             if runbook_description:
                 with st.spinner("Claude is creating your runbook..."):
                     import time
+from auth_azure_sso import require_permission
                     time.sleep(2)
                     
                     st.success("✅ Runbook generated!")

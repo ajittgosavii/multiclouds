@@ -153,6 +153,7 @@ Respond ONLY with valid JSON."""
             return json.loads(response_text)
         except:
             import re
+from auth_azure_sso import require_permission
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group())
@@ -238,6 +239,8 @@ class AccountLifecycleModule:
     """Complete Account Lifecycle Management"""
     
     @staticmethod
+    @require_permission('manage_policies')
+
     def render():
         """Render the account lifecycle module"""
         st.title("🔄 Account Lifecycle Management")

@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from core_account_manager import get_account_manager, get_account_names
 from aws_cloudformation import CloudFormationManager
 import json
+from auth_azure_sso import require_permission
 
 # ============================================================================
 # CI/CD INTEGRATION (DEMO MODE - Shows sample data)
@@ -117,6 +118,8 @@ class ProvisioningModule:
     """Provisioning & Deployment functionality - Enhanced with CI/CD"""
     
     @staticmethod
+    @require_permission('provision_resources')
+
     def render():
         """Main render method"""
         st.title("🚀 Provisioning & Deployment")

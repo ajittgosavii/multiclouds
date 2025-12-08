@@ -365,6 +365,7 @@ def natural_language_query(query: str, cost_data: Dict) -> str:
     
     try:
         import anthropic
+from auth_azure_sso import require_permission
         message = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=1000,
@@ -595,6 +596,8 @@ class FinOpsEnterpriseModule:
     """Enterprise FinOps with AI-powered intelligence, sustainability tracking, and anomaly detection"""
     
     @staticmethod
+    @require_permission('view_costs')
+
     def render():
         """Main render method - Performance Optimized"""
         
