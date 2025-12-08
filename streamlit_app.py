@@ -267,6 +267,39 @@ td {
     color: black !important;
     margin: 5px 0 !important;
 }
+
+/* ===== NAVIGATION STYLING ===== */
+/* White background for navigation section */
+div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) {
+    background: white !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    margin: 15px 0 !important;
+}
+
+/* Navigation buttons styling */
+div[data-testid="column"] button[kind="primary"] {
+    background: linear-gradient(135deg, #2E86DE 0%, #0652DD 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(46,134,222,0.4) !important;
+}
+
+div[data-testid="column"] button[kind="secondary"] {
+    background-color: white !important;
+    color: #2E86DE !important;
+    border: 2px solid #2E86DE !important;
+    font-weight: 500 !important;
+}
+
+div[data-testid="column"] button[kind="secondary"]:hover {
+    background-color: #EEF5FF !important;
+    border-color: #0652DD !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(6,82,221,0.2) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 # ==================================================================================
@@ -275,7 +308,7 @@ td {
 
 # Main header - centered with WHITE text
 st.markdown("""
-<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+<div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
     <h1 class="header-title" style="color: #FFFFFF !important; margin: 0; font-weight: 600; text-shadow: none;">☁️ CloudIDP v3.0 Tri-Cloud Platform</h1>
     <p style="color: rgba(255,255,255,0.95) !important; margin: 5px 0 0 0; font-size: 18px; text-shadow: none;">Enterprise Multi-Cloud Infrastructure Development Platform</p>
 </div>
@@ -293,7 +326,7 @@ if AUTH_ENABLED and current_user and isinstance(current_user, dict):
     st.markdown("---")
 
 # ==================================================================================
-# CLOUD PROVIDER SELECTION - PROMINENT AT TOP
+# CLOUD PROVIDER SELECTION - VISUAL CARDS
 # ==================================================================================
 
 st.markdown("### 🌐 Select Cloud Provider")
@@ -303,34 +336,135 @@ st.caption("Choose your cloud platform to manage infrastructure")
 if 'cloud_provider' not in st.session_state:
     st.session_state.cloud_provider = 'AWS'
 
-# Cloud provider radio buttons
-col1, col2, col3 = st.columns([1, 2, 1])
+# Cloud provider selection using columns
+col1, col2, col3 = st.columns(3)
 
-with col2:
-    provider = st.radio(
-        "Cloud Platform",
-        options=["AWS", "Azure", "GCP"],
-        horizontal=True,
-        key="cloud_selector",
-        index=["AWS", "Azure", "GCP"].index(st.session_state.cloud_provider),
-        help="Switch between AWS, Azure, and Google Cloud Platform"
-    )
+# ==================== AWS ====================
+with col1:
+    is_active = st.session_state.cloud_provider == 'AWS'
     
-    # Update session state and trigger rerun if changed
-    if provider != st.session_state.cloud_provider:
-        st.session_state.cloud_provider = provider
+    if st.button("🔸 Select AWS", key="aws_btn", use_container_width=True, 
+                 type="primary" if is_active else "secondary"):
+        st.session_state.cloud_provider = 'AWS'
         
         # Save preference to database (if authenticated)
         if AUTH_ENABLED and current_user and isinstance(current_user, dict) and db_manager:
             try:
                 user_prefs = st.session_state.get('user_preferences', {})
-                user_prefs['default_cloud'] = provider.lower()
+                user_prefs['default_cloud'] = 'aws'
                 db_manager.save_user_preferences(current_user['id'], user_prefs)
                 st.session_state.user_preferences = user_prefs
             except Exception:
-                pass  # Silently fail if preference saving doesn't work
-        
+                pass
         st.rerun()
+    
+    border = "4px solid #FF9900" if is_active else "2px solid #DDDDDD"
+    bg = "#FFF5E6" if is_active else "#FFFFFF"
+    shadow = "0 4px 12px rgba(255,153,0,0.3)" if is_active else "0 2px 6px rgba(0,0,0,0.1)"
+    
+    st.markdown(f"""
+    <div style="border: {border}; background: {bg}; padding: 30px 20px; border-radius: 12px; text-align: center; box-shadow: {shadow}; margin-top: 10px;">
+        <div style="font-size: 64px; color: #FF9900; font-weight: bold; margin-bottom: 12px; font-family: Arial, sans-serif;">
+            AWS
+        </div>
+        <div style="font-size: 16px; color: #232F3E; font-weight: 600;">
+            Amazon Web Services
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ==================== AZURE ====================
+with col2:
+    is_active = st.session_state.cloud_provider == 'Azure'
+    
+    if st.button("🔹 Select Azure", key="azure_btn", use_container_width=True,
+                 type="primary" if is_active else "secondary"):
+        st.session_state.cloud_provider = 'Azure'
+        
+        # Save preference to database (if authenticated)
+        if AUTH_ENABLED and current_user and isinstance(current_user, dict) and db_manager:
+            try:
+                user_prefs = st.session_state.get('user_preferences', {})
+                user_prefs['default_cloud'] = 'azure'
+                db_manager.save_user_preferences(current_user['id'], user_prefs)
+                st.session_state.user_preferences = user_prefs
+            except Exception:
+                pass
+        st.rerun()
+    
+    border = "4px solid #0078D4" if is_active else "2px solid #DDDDDD"
+    bg = "#EBF5FF" if is_active else "#FFFFFF"
+    shadow = "0 4px 12px rgba(0,120,212,0.3)" if is_active else "0 2px 6px rgba(0,0,0,0.1)"
+    
+    st.markdown(f"""
+    <div style="border: {border}; background: {bg}; padding: 30px 20px; border-radius: 12px; text-align: center; box-shadow: {shadow}; margin-top: 10px;">
+        <div style="margin-bottom: 12px;">
+            <svg width="80" height="80" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="azureGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#0078D4;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#00BCF2;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path fill="url(#azureGrad)" d="M86.724 49.508 60.995 79.085H36.897L72.124 16.915h14.6L61.015 49.5zm-36.067 0L32.82 79.085H9.236l13.828-29.577h-13.6L23.309 9.236l27.348 40.272z"/>
+            </svg>
+        </div>
+        <div style="font-size: 22px; color: #0078D4; font-weight: bold; margin-bottom: 4px; letter-spacing: 2px;">
+            AZURE
+        </div>
+        <div style="font-size: 14px; color: #005A9E; font-weight: 600;">
+            Microsoft Azure
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ==================== GCP ====================
+with col3:
+    is_active = st.session_state.cloud_provider == 'GCP'
+    
+    if st.button("🔷 Select GCP", key="gcp_btn", use_container_width=True,
+                 type="primary" if is_active else "secondary"):
+        st.session_state.cloud_provider = 'GCP'
+        
+        # Save preference to database (if authenticated)
+        if AUTH_ENABLED and current_user and isinstance(current_user, dict) and db_manager:
+            try:
+                user_prefs = st.session_state.get('user_preferences', {})
+                user_prefs['default_cloud'] = 'gcp'
+                db_manager.save_user_preferences(current_user['id'], user_prefs)
+                st.session_state.user_preferences = user_prefs
+            except Exception:
+                pass
+        st.rerun()
+    
+    border = "4px solid #4285F4" if is_active else "2px solid #DDDDDD"
+    bg = "#F0F4FF" if is_active else "#FFFFFF"
+    shadow = "0 4px 12px rgba(66,133,244,0.3)" if is_active else "0 2px 6px rgba(0,0,0,0.1)"
+    
+    st.markdown(f"""
+    <div style="border: {border}; background: {bg}; padding: 30px 20px; border-radius: 12px; text-align: center; box-shadow: {shadow}; margin-top: 10px;">
+        <div style="margin-bottom: 12px;">
+            <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(10,10)">
+                    <!-- Blue hexagon top -->
+                    <path d="M40 0 L60 0 L80 34.64 L60 69.28 L40 69.28 L20 34.64 Z" fill="#4285F4" opacity="0.9"/>
+                    <!-- Green bottom right -->
+                    <path d="M60 69.28 L80 34.64 L60 0" fill="#34A853" opacity="0.8"/>
+                    <!-- Yellow bottom left -->
+                    <path d="M20 34.64 L40 69.28 L60 69.28" fill="#FBBC05" opacity="0.8"/>
+                    <!-- Red top -->
+                    <path d="M40 0 L60 0 L80 34.64" fill="#EA4335" opacity="0.7"/>
+                </g>
+            </svg>
+        </div>
+        <div style="font-size: 22px; color: #4285F4; font-weight: bold; margin-bottom: 4px; letter-spacing: 2px;">
+            GCP
+        </div>
+        <div style="font-size: 14px; color: #5F6368; font-weight: 600;">
+            Google Cloud Platform
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
