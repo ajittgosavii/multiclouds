@@ -1,33 +1,52 @@
 """
 Azure AD SSO Authentication Module
 Professional light blue gradient design with auto-redirect
-Uses the proven meta refresh approach from Saturday
+Firebase is OPTIONAL - works without it if secrets not configured
 """
 
 import streamlit as st
 import requests
 from datetime import datetime, timedelta
-import firebase_admin
-from firebase_admin import credentials, firestore
 import secrets
 import urllib.parse
 
-# Initialize Firebase
+# Try to import Firebase, but make it optional
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+    FIREBASE_AVAILABLE = True
+except ImportError:
+    FIREBASE_AVAILABLE = False
+
+# Initialize Firebase (optional)
 def init_firebase():
+    """Initialize Firebase if credentials are available"""
+    if not FIREBASE_AVAILABLE:
+        return None
+    
+    # Check if Firebase secrets exist
+    if "firebase" not in st.secrets:
+        return None
+    
     if not firebase_admin._apps:
-        cred = credentials.Certificate({
-            "type": st.secrets["firebase"]["type"],
-            "project_id": st.secrets["firebase"]["project_id"],
-            "private_key_id": st.secrets["firebase"]["private_key_id"],
-            "private_key": st.secrets["firebase"]["private_key"].replace('\\n', '\n'),
-            "client_email": st.secrets["firebase"]["client_email"],
-            "client_id": st.secrets["firebase"]["client_id"],
-            "auth_uri": st.secrets["firebase"]["auth_uri"],
-            "token_uri": st.secrets["firebase"]["token_uri"],
-            "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
-            "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"]
-        })
-        firebase_admin.initialize_app(cred)
+        try:
+            cred = credentials.Certificate({
+                "type": st.secrets["firebase"]["type"],
+                "project_id": st.secrets["firebase"]["project_id"],
+                "private_key_id": st.secrets["firebase"]["private_key_id"],
+                "private_key": st.secrets["firebase"]["private_key"].replace('\\n', '\n'),
+                "client_email": st.secrets["firebase"]["client_email"],
+                "client_id": st.secrets["firebase"]["client_id"],
+                "auth_uri": st.secrets["firebase"]["auth_uri"],
+                "token_uri": st.secrets["firebase"]["token_uri"],
+                "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
+                "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"]
+            })
+            firebase_admin.initialize_app(cred)
+        except Exception as e:
+            st.warning(f"Firebase initialization failed: {str(e)}")
+            return None
+    
     return firestore.client()
 
 # Azure AD OAuth Configuration
@@ -95,12 +114,9 @@ def get_user_info(access_token):
         st.error(f"Failed to get user info: {str(e)}")
         return None
 
-def create_or_update_user(user_info, db):
-    """Create or update user in Firestore"""
-    users_ref = db.collection('users')
+def create_or_update_user(user_info, db=None):
+    """Create or update user in Firestore (if available) or session only"""
     user_email = user_info.get('mail') or user_info.get('userPrincipalName')
-    
-    user_doc = users_ref.document(user_email).get()
     
     user_data = {
         'email': user_email,
@@ -113,22 +129,40 @@ def create_or_update_user(user_info, db):
         'auth_provider': 'azure_ad'
     }
     
-    if not user_doc.exists:
-        # New user - set default role
+    # If Firebase is available, use it
+    if db is not None:
+        try:
+            users_ref = db.collection('users')
+            user_doc = users_ref.document(user_email).get()
+            
+            if not user_doc.exists:
+                # New user - set default role
+                user_data['role'] = 'viewer'
+                user_data['created_at'] = datetime.utcnow()
+                user_data['status'] = 'active'
+            
+            users_ref.document(user_email).set(user_data, merge=True)
+            
+            # Fetch complete user data
+            updated_doc = users_ref.document(user_email).get()
+            return updated_doc.to_dict()
+        except Exception as e:
+            st.warning(f"Firebase update failed, using session only: {str(e)}")
+    
+    # Fallback: Use session storage only (no Firebase)
+    if 'role' not in user_data:
         user_data['role'] = 'viewer'
+    if 'created_at' not in user_data:
         user_data['created_at'] = datetime.utcnow()
+    if 'status' not in user_data:
         user_data['status'] = 'active'
     
-    users_ref.document(user_email).set(user_data, merge=True)
-    
-    # Fetch complete user data
-    updated_doc = users_ref.document(user_email).get()
-    return updated_doc.to_dict()
+    return user_data
 
 def require_auth():
     """Main authentication flow with auto-redirect"""
     
-    # Initialize Firebase
+    # Initialize Firebase (optional)
     db = init_firebase()
     
     # Check if user is already authenticated
@@ -156,7 +190,7 @@ def require_auth():
             user_info = get_user_info(token_response['access_token'])
             
             if user_info:
-                # Create/update user in Firestore
+                # Create/update user (with or without Firebase)
                 user_data = create_or_update_user(user_info, db)
                 
                 # Store in session
@@ -293,7 +327,7 @@ def show_login_page():
     st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
     
     # Login page content (shown briefly before redirect)
-    st.markdown("""
+    st.markdown(f"""
     <div class="login-container">
         <div class="login-card">
             <h1 class="login-title">🔐 CloudIDP Sign In</h1>
@@ -309,7 +343,7 @@ def show_login_page():
                 <span>Redirecting to Microsoft login...</span>
             </div>
             
-            <a href="{}" class="fallback-link">
+            <a href="{auth_url}" class="fallback-link">
                 🔷 If not redirected, click here
             </a>
             
@@ -318,7 +352,7 @@ def show_login_page():
             </div>
         </div>
     </div>
-    """.format(auth_url), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
     
     st.stop()
 
@@ -356,6 +390,10 @@ def is_admin():
     user = get_current_user()
     return user and user.get('role') == 'admin'
 
-# Initialize authentication on import
+# Initialize authentication on import (but don't fail if Firebase is missing)
 if __name__ != "__main__":
-    require_auth()
+    try:
+        require_auth()
+    except Exception as e:
+        # Log error but don't crash on import
+        print(f"Auth initialization warning: {str(e)}")
