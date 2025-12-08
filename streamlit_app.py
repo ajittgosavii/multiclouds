@@ -321,11 +321,14 @@ with col2:
         st.session_state.cloud_provider = provider
         
         # Save preference to database (if authenticated)
-        if AUTH_ENABLED and current_user and db_manager:
-            user_prefs = st.session_state.get('user_preferences', {})
-            user_prefs['default_cloud'] = provider.lower()
-            db_manager.save_user_preferences(current_user['id'], user_prefs)
-            st.session_state.user_preferences = user_prefs
+        if AUTH_ENABLED and current_user and isinstance(current_user, dict) and db_manager:
+            try:
+                user_prefs = st.session_state.get('user_preferences', {})
+                user_prefs['default_cloud'] = provider.lower()
+                db_manager.save_user_preferences(current_user['id'], user_prefs)
+                st.session_state.user_preferences = user_prefs
+            except Exception:
+                pass  # Silently fail if preference saving doesn't work
         
         st.rerun()
 
@@ -402,16 +405,19 @@ def main():
     Navigation.render(cloud_provider)
     
     # Log page access (if authenticated)
-    if AUTH_ENABLED and current_user and db_manager:
+    if AUTH_ENABLED and current_user and isinstance(current_user, dict) and db_manager:
         current_page = st.session_state.get('current_page', 'Dashboard')
-        db_manager.log_event(
-            user_id=current_user['id'],
-            event_type='page_access',
-            event_data={
-                'page': current_page,
-                'cloud_provider': cloud_provider
-            }
-        )
+        try:
+            db_manager.log_event(
+                user_id=current_user['id'],
+                event_type='page_access',
+                event_data={
+                    'page': current_page,
+                    'cloud_provider': cloud_provider
+                }
+            )
+        except Exception:
+            pass  # Silently fail if logging doesn't work
     
     # ==================================================================================
     # FOOTER

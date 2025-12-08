@@ -79,8 +79,9 @@ def require_permission(permission: str) -> Callable:
                 return
             
             current_user = user_manager.get_current_user()
-            if not current_user:
+            if not current_user or not isinstance(current_user, dict):
                 st.error("❌ User session not found")
+                st.info("Please logout and login again")
                 return
             
             user_role = current_user.get('role', 'viewer')
@@ -322,13 +323,13 @@ def render_login():
                         user_info['role'] = 'viewer'
                         user_info['is_active'] = True
                         
-                        # Call with user_info dict
-                        user = db_manager.create_or_update_user(user_info)
+                        # Save user to Firebase
+                        db_manager.create_or_update_user(user_info)
                         
-                        # Store in session
+                        # Store user_info in session (use the dict we have, not Firebase return value)
                         st.session_state.authenticated = True
                         st.session_state.user_id = user_info['id']
-                        st.session_state.user_info = user
+                        st.session_state.user_info = user_info  # Use the dict directly
                         st.session_state.user_manager = SimpleUserManager()
                         
                         # Clear query params and rerun
