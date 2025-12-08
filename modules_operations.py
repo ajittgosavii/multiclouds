@@ -9,6 +9,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 from core_account_manager import get_account_manager, get_account_names
+from auth_azure_sso import require_permission
 import json
 import uuid
 
@@ -936,7 +937,6 @@ Would you like me to execute these fixes automatically?
             if runbook_description:
                 with st.spinner("Claude is creating your runbook..."):
                     import time
-from auth_azure_sso import require_permission
                     time.sleep(2)
                     
                     st.success("✅ Runbook generated!")
