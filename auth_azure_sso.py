@@ -354,9 +354,8 @@ def render_login():
             st.rerun()
     
     else:
-        # Bulletproof auto-redirect using Streamlit components
+        # Professional login page with centered link
         from urllib.parse import quote
-        import streamlit.components.v1 as components
         
         # Build OAuth authorization URL
         authority = f"https://login.microsoftonline.com/{tenant_id}"
@@ -372,88 +371,70 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Apply light blue gradient background
-        st.markdown("""
-        <style>
-        .stApp {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-            background-attachment: fixed !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # Use components.html for reliable redirect
-        redirect_script = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Redirecting...</title>
-            <style>
-                body {{
-                    margin: 0;
-                    padding: 0;
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                    background: transparent;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    min-height: 100px;
-                }}
-                .container {{
-                    text-align: center;
-                    padding: 20px;
-                }}
-                .spinner {{
-                    font-size: 36px;
-                    animation: spin 1s linear infinite;
-                }}
-                @keyframes spin {{
-                    from {{ transform: rotate(0deg); }}
-                    to {{ transform: rotate(360deg); }}
-                }}
-                .text {{
-                    margin-top: 15px;
-                    color: #0078D4;
-                    font-size: 16px;
-                    font-weight: 500;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="spinner">🔄</div>
-                <div class="text">Redirecting to Microsoft...</div>
-            </div>
-            <script>
-                // Immediate redirect
-                window.top.location.href = "{auth_url}";
-            </script>
-        </body>
-        </html>
-        """
-        
-        # Show a clean message
-        st.title("🔐 CloudIDP Sign In")
-        st.info("🔄 Redirecting you to Microsoft login...")
-        
-        # Execute redirect using Streamlit component
-        components.html(redirect_script, height=100)
-        
-        # Fallback link (in case component doesn't execute)
+        # Clean professional login page with bordered logo and centered link
         st.markdown(f"""
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="{auth_url}" style="
-                display: inline-block;
-                padding: 12px 32px;
-                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                color: white;
-                text-decoration: none;
-                border-radius: 8px;
-                font-weight: 600;
-                box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
-            ">
-                Click here if not redirected
+        <style>
+        .login-container {{
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 50px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            text-align: center;
+        }}
+        .logo-wrapper {{
+            display: inline-block;
+            padding: 20px;
+            border: 2px solid #E1E8ED;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            background: #F7F9FA;
+        }}
+        .logo {{
+            font-size: 72px;
+            line-height: 1;
+        }}
+        .title {{
+            font-size: 36px;
+            font-weight: 700;
+            color: #0078D4;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }}
+        .subtitle {{
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 50px;
+            font-weight: 400;
+        }}
+        .signin-link {{
+            display: inline-block;
+            padding: 12px 32px;
+            color: #0078D4;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            border: 2px solid #0078D4;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: white;
+        }}
+        .signin-link:hover {{
+            background: #0078D4;
+            color: white;
+            text-decoration: none;
+        }}
+        </style>
+        
+        <div class="login-container">
+            <div class="logo-wrapper">
+                <div class="logo">☁️</div>
+            </div>
+            <div class="title">CloudIDP</div>
+            <div class="subtitle">Multi-Cloud Infrastructure Intelligence Platform</div>
+            <a href="{auth_url}" class="signin-link">
+                🔷 Sign in with Microsoft
             </a>
         </div>
         """, unsafe_allow_html=True)
