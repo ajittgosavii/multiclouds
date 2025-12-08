@@ -16,9 +16,8 @@ sys.path.append(str(Path(__file__).parent / "src"))
 # AUTHENTICATION - MUST BE FIRST
 # ==================================================================================
 try:
-    from auth_azure_sso import init_authentication
-    from auth_ui_components import render_login_page, render_user_profile
-    from auth_database_firestore import get_database_manager
+    from auth_azure_sso import render_login, RoleManager  # FIXED: Use correct imports
+    from auth_database_firebase import get_database_manager  # FIXED: Firebase not Firestore
     
     AUTH_ENABLED = True
 except ImportError as e:
@@ -40,32 +39,31 @@ st.set_page_config(
 # INITIALIZE AUTHENTICATION (IF ENABLED)
 # ==================================================================================
 if AUTH_ENABLED:
-    init_authentication()
-    
-    # Check authentication
-    user_manager = st.session_state.get('user_manager')
-    if not user_manager or not user_manager.is_authenticated():
+    # Check if user is authenticated
+    if not st.session_state.get('authenticated', False):
         # Show login page and stop
-        render_login_page()
+        render_login()
         st.stop()
     
-    # Get current user and database manager
-    current_user = user_manager.get_current_user()
+    # User is authenticated - get user info
+    current_user = st.session_state.get('user_info')
     db_manager = get_database_manager()
     
-    # Update user in database
-    if current_user and db_manager:
-        db_manager.create_or_update_user(current_user)
-        
-        # Load user preferences
-        user_prefs = db_manager.get_user_preferences(current_user['id'])
-        if 'user_preferences' not in st.session_state:
-            st.session_state.user_preferences = user_prefs
-        
-        # Set default cloud provider from preferences
-        if 'cloud_provider' not in st.session_state:
-            default_cloud = user_prefs.get('default_cloud', 'AWS').upper()
-            st.session_state.cloud_provider = default_cloud
+    # Initialize role manager
+    if 'role_manager' not in st.session_state:
+        st.session_state.role_manager = RoleManager()
+    
+    # Set default cloud provider from user preferences if available
+    if 'cloud_provider' not in st.session_state:
+        if current_user:
+            # Could load from database preferences here
+            st.session_state.cloud_provider = 'AWS'
+        else:
+            st.session_state.cloud_provider = 'AWS'
+else:
+    # No authentication - set defaults
+    current_user = None
+    db_manager = None
 
 # ==================================================================================
 # IMPORT APPLICATION MODULES
@@ -340,8 +338,52 @@ def main():
     # ==================================================================================
     with st.sidebar:
         # Show user profile at top of sidebar (if authenticated)
-        if AUTH_ENABLED:
-            render_user_profile()
+        if AUTH_ENABLED and current_user:
+            st.markdown("## 👤 User Profile")
+            st.markdown("### 👤")
+            st.markdown(f"**{current_user.get('name', 'Unknown User')}**")
+            st.caption(current_user.get('email', 'No email'))
+            
+            # Role badge
+            role = current_user.get('role', 'viewer')
+            role_colors = {
+                'admin': '🔴',
+                'architect': '🔵',
+                'developer': '🟢',
+                'finops': '🟡',
+                'security': '🟠',
+                'viewer': '⚪'
+            }
+            role_icon = role_colors.get(role, '⚪')
+            st.markdown(f"**Role:** {role_icon} {role.title()}")
+            
+            # Last login
+            if current_user.get('last_login'):
+                try:
+                    last_login = current_user['last_login'][:16]
+                    st.caption(f"🟢 Logged in: {last_login.split('T')[1]}")
+                except:
+                    st.caption("🟢 Logged in")
+            
+            # Logout button
+            if st.button("🚪 Logout", use_container_width=True):
+                # Log logout event
+                if db_manager:
+                    try:
+                        db_manager.log_event(
+                            user_id=current_user['id'],
+                            event_type='logout',
+                            event_data={}
+                        )
+                    except:
+                        pass
+                
+                # Clear session
+                st.session_state.authenticated = False
+                st.session_state.user_id = None
+                st.session_state.user_info = None
+                st.rerun()
+            
             st.markdown("---")
         
         # Render global sidebar (cloud-aware)
@@ -379,8 +421,7 @@ def main():
     
     with col3:
         if AUTH_ENABLED and current_user:
-            role_manager = st.session_state.get('role_manager')
-            user_role = role_manager.get_user_role(current_user['id']) if role_manager else 'viewer'
+            user_role = current_user.get('role', 'viewer')
             st.caption(f"👤 {user_role.title()} | CloudIDP v3.0")
         else:
             st.caption(f"🌐 CloudIDP v3.0 Tri-Cloud Platform")
