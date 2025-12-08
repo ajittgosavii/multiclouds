@@ -1,6 +1,6 @@
 """
-Azure AD SSO Authentication - DEBUG VERSION
-Shows detailed error messages for troubleshooting
+Azure AD SSO Authentication - FIXED VERSION
+Addresses redirect URI issues and improves OAuth flow
 """
 
 import streamlit as st
@@ -9,7 +9,7 @@ from functools import wraps
 
 
 # ============================================================================
-# ROLE-BASED ACCESS CONTROL (Same as before)
+# ROLE-BASED ACCESS CONTROL
 # ============================================================================
 
 class RoleManager:
@@ -107,11 +107,11 @@ class SimpleUserManager:
 
 
 # ============================================================================
-# AZURE AD AUTHENTICATION - DEBUG VERSION
+# AZURE AD AUTHENTICATION - FIXED VERSION
 # ============================================================================
 
-def exchange_code_for_token_simple(code: str, client_id: str, client_secret: str, 
-                                  redirect_uri: str, tenant_id: str = "common") -> Optional[Dict]:
+def exchange_code_for_token(code: str, client_id: str, client_secret: str, 
+                           redirect_uri: str, tenant_id: str = "common") -> Optional[Dict]:
     """Exchange authorization code for access token"""
     import requests
     
@@ -127,114 +127,67 @@ def exchange_code_for_token_simple(code: str, client_id: str, client_secret: str
     }
     
     try:
-        response = requests.post(token_url, data=token_data)
+        response = requests.post(token_url, data=token_data, timeout=10)
         
         if response.status_code != 200:
-            try:
-                error_data = response.json()
-                error_desc = error_data.get('error_description', '')
-                st.error(f"❌ Authentication failed: {error_desc}")
-            except:
-                st.error(f"❌ Authentication failed (Status: {response.status_code})")
+            error_data = response.json() if response.content else {}
+            error_desc = error_data.get('error_description', f'HTTP {response.status_code}')
+            
+            st.error(f"❌ Authentication Failed")
+            
+            with st.expander("🔍 View Error Details"):
+                st.code(error_desc)
+                
+                # Provide specific fixes based on error type
+                if 'redirect_uri' in error_desc.lower():
+                    st.warning(f"""
+                    **Redirect URI Mismatch**
+                    
+                    The redirect_uri must match EXACTLY in:
+                    1. Azure AD App Registration → Authentication
+                    2. Streamlit secrets configuration
+                    
+                    Current redirect_uri: `{redirect_uri}`
+                    
+                    **Steps to fix:**
+                    1. Go to Azure Portal → App Registrations → Your App
+                    2. Go to Authentication → Platform configurations
+                    3. Add/verify this EXACT URL: `{redirect_uri}`
+                    4. Make sure "ID tokens" is checked under Implicit grant
+                    """)
+                
+                elif 'client_secret' in error_desc.lower() or 'invalid_client' in error_desc.lower():
+                    st.warning("""
+                    **Invalid Client Secret**
+                    
+                    **Steps to fix:**
+                    1. Go to Azure Portal → App Registrations → Your App
+                    2. Go to Certificates & secrets
+                    3. Create a new client secret
+                    4. Update the secret in Streamlit secrets
+                    """)
+                
+                elif 'code' in error_desc.lower() or 'expired' in error_desc.lower():
+                    st.warning("""
+                    **Authorization Code Invalid/Expired**
+                    
+                    Authorization codes expire in 10 minutes and can only be used once.
+                    
+                    **Solution:** Click the "Sign in with Microsoft" button below to get a new code.
+                    """)
+            
             return None
         
         return response.json()
         
-    except Exception as e:
-        st.error(f"❌ Token exchange failed: {str(e)}")
+    except requests.exceptions.Timeout:
+        st.error("❌ Connection timeout - please try again")
         return None
-
-
-def exchange_code_for_token_debug(code: str, client_id: str, client_secret: str, 
-                                  redirect_uri: str, tenant_id: str = "common") -> Optional[Dict]:
-    """Exchange authorization code for access token - WITH DEBUGGING"""
-    import requests
-    
-    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
-    
-    token_data = {
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'code': code,
-        'redirect_uri': redirect_uri,
-        'grant_type': 'authorization_code',
-        'scope': 'openid profile email https://graph.microsoft.com/User.Read'
-    }
-    
-    # Debug output
-    st.write("🔍 **Debug Info:**")
-    st.write(f"- Token URL: `{token_url}`")
-    st.write(f"- Client ID: `{client_id[:10]}...{client_id[-10:]}`")
-    st.write(f"- Redirect URI: `{redirect_uri}`")
-    st.write(f"- Code: `{code[:20]}...` (length: {len(code)})")
-    
-    try:
-        response = requests.post(token_url, data=token_data)
-        
-        # Show response status
-        st.write(f"- Response Status: `{response.status_code}`")
-        
-        if response.status_code != 200:
-            # Show detailed error
-            try:
-                error_data = response.json()
-                st.error("❌ **Token Exchange Failed!**")
-                st.json(error_data)
-                
-                # Common error messages and fixes
-                error_code = error_data.get('error')
-                error_desc = error_data.get('error_description', '')
-                
-                if 'redirect_uri' in error_desc.lower():
-                    st.warning("""
-                    **🔧 Redirect URI Mismatch!**
-                    
-                    The redirect_uri in your token request doesn't match what was used in the authorization request.
-                    
-                    **Fix:**
-                    1. Check your Azure AD App Registration → Authentication
-                    2. Make sure this EXACT URL is listed:
-                       `""" + redirect_uri + """`
-                    3. No trailing slash, exact match required
-                    """)
-                
-                elif 'client_secret' in error_desc.lower() or 'credentials' in error_desc.lower():
-                    st.warning("""
-                    **🔧 Invalid Client Secret!**
-                    
-                    The client_secret is incorrect or expired.
-                    
-                    **Fix:**
-                    1. Go to Azure Portal → App Registration → Certificates & secrets
-                    2. Generate a new client secret
-                    3. Copy the VALUE (not the Secret ID)
-                    4. Update in Streamlit Secrets
-                    """)
-                
-                elif 'code' in error_desc.lower():
-                    st.warning("""
-                    **🔧 Invalid or Expired Code!**
-                    
-                    The authorization code is invalid, expired, or already used.
-                    
-                    **Fix:**
-                    1. Authorization codes can only be used once
-                    2. They expire after 10 minutes
-                    3. Try logging in again (click "Sign in with Microsoft")
-                    """)
-                
-            except:
-                st.error(f"Response: {response.text}")
-            
-            return None
-        
-        token_response = response.json()
-        st.success("✅ Token exchange successful!")
-        return token_response
-        
+    except requests.exceptions.ConnectionError:
+        st.error("❌ Network connection error - please check your internet connection")
+        return None
     except Exception as e:
-        st.error(f"❌ Exception during token exchange: {str(e)}")
-        st.exception(e)
+        st.error(f"❌ Unexpected error: {str(e)}")
         return None
 
 
@@ -248,7 +201,9 @@ def get_user_info(access_token: str) -> Optional[Dict]:
     }
     
     try:
-        response = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
+        response = requests.get('https://graph.microsoft.com/v1.0/me', 
+                              headers=headers, 
+                              timeout=10)
         response.raise_for_status()
         
         user_data = response.json()
@@ -266,152 +221,275 @@ def get_user_info(access_token: str) -> Optional[Dict]:
 
 
 def render_login():
-    """Render login UI - Auto-redirect to Microsoft"""
+    """Render login UI with proper OAuth flow"""
     
     # Get Azure AD config
     try:
         client_id = st.secrets.azure_ad.client_id
         client_secret = st.secrets.azure_ad.client_secret
         tenant_id = st.secrets.azure_ad.get('tenant_id', 'common')
-        redirect_uri = st.secrets.azure_ad.get('redirect_uri', '')
         
+        # CRITICAL: Get the base URL properly
+        # The redirect_uri should be just the base URL, no path
+        redirect_uri_config = st.secrets.azure_ad.get('redirect_uri', '')
+        
+        # Ensure redirect_uri ends without trailing slash
+        redirect_uri = redirect_uri_config.rstrip('/')
+        
+        # Validate configuration
+        if not all([client_id, client_secret, redirect_uri]):
+            raise ValueError("Missing required configuration")
+            
     except Exception as e:
-        st.error(f"❌ Azure AD configuration missing: {str(e)}")
+        st.error("❌ Azure AD Configuration Error")
         st.info("""
-        **Add these to Streamlit Secrets:**
+        **Required Streamlit Secrets:**
+        
         ```toml
         [azure_ad]
-        client_id = "your-client-id"
-        client_secret = "your-client-secret"
-        tenant_id = "common"
-        redirect_uri = "https://hyperscaler.streamlit.app"
+        client_id = "your-client-id-from-azure"
+        client_secret = "your-client-secret-from-azure"
+        tenant_id = "common"  # Use "common" for multitenant
+        redirect_uri = "https://hyperscaler.streamlit.app"  # Your app URL
         ```
+        
+        **Important Notes:**
+        - No trailing slash in redirect_uri
+        - Must match EXACTLY in Azure AD App Registration
+        - Use "common" for multitenant, or your tenant ID for single tenant
         """)
-        return
+        st.stop()
     
     # Check for OAuth callback
     query_params = st.query_params
     
     if 'code' in query_params:
-        with st.spinner("Completing sign in..."):
+        # User returned from Microsoft with authorization code
+        with st.spinner("🔐 Completing sign-in..."):
             code = query_params['code']
             
             # Exchange code for token
-            token_response = exchange_code_for_token_simple(
-            code=code,
-            client_id=client_id,
-            client_secret=client_secret,
-            redirect_uri=redirect_uri,
-            tenant_id=tenant_id
-        )
-        
-        if token_response and 'access_token' in token_response:
-            # Get user info
-            user_info = get_user_info(token_response['access_token'])
+            token_response = exchange_code_for_token(
+                code=code,
+                client_id=client_id,
+                client_secret=client_secret,
+                redirect_uri=redirect_uri,
+                tenant_id=tenant_id
+            )
             
-            if user_info:
-                # Auto-register or update user in Firebase
-                try:
-                    from auth_database_firebase import get_database_manager
-                    db_manager = get_database_manager()
-                    
-                    if db_manager:
-                        # Check if this is a new user or existing user
-                        user_id = user_info['id']
+            if token_response and 'access_token' in token_response:
+                # Get user info from Microsoft Graph
+                user_info = get_user_info(token_response['access_token'])
+                
+                if user_info:
+                    # Register/update user in Firebase
+                    try:
+                        from auth_database_firebase import get_database_manager
+                        db_manager = get_database_manager()
                         
-                        try:
-                            # Try to get existing user
-                            existing_user = db_manager.get_user(user_id)
-                            is_new_user = not (existing_user and isinstance(existing_user, dict))
-                        except:
-                            # If get_user fails, assume new user
-                            is_new_user = True
-                        
-                        if is_new_user:
-                            # New user - set default role and is_active
-                            user_info['role'] = 'viewer'
-                            user_info['is_active'] = True
-                            db_manager.create_or_update_user(user_info)
-                            # For new users, use the user_info we just created
-                            final_user_info = user_info
-                        else:
-                            # Existing user - DON'T set role (preserve Firebase role)
-                            # Only update name, email, last_login
-                            update_data = {
-                                'id': user_info['id'],
-                                'email': user_info['email'],
-                                'name': user_info.get('name', ''),
-                                'given_name': user_info.get('given_name', ''),
-                                'family_name': user_info.get('family_name', '')
-                            }
-                            db_manager.create_or_update_user(update_data)
+                        if db_manager:
+                            user_id = user_info['id']
                             
-                            # IMPORTANT: Load user FROM Firebase to get their actual role
+                            # Check if user exists
                             try:
-                                final_user_info = db_manager.get_user(user_id)
-                                if not final_user_info:
-                                    final_user_info = user_info
+                                existing_user = db_manager.get_user(user_id)
+                                is_new_user = not (existing_user and isinstance(existing_user, dict))
                             except:
+                                is_new_user = True
+                            
+                            if is_new_user:
+                                # New user - set defaults
+                                user_info['role'] = 'viewer'
+                                user_info['is_active'] = True
+                                db_manager.create_or_update_user(user_info)
                                 final_user_info = user_info
-                        
-                        # Store the final user info in session
-                        st.session_state.authenticated = True
-                        st.session_state.user_id = final_user_info['id']
-                        st.session_state.user_info = final_user_info
-                        st.session_state.user_manager = SimpleUserManager()
-                        
-                        # Clear query params and rerun
-                        st.query_params.clear()
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"❌ Failed to register user: {str(e)}")
-                    st.info("Please try logging in again or contact support.")
+                            else:
+                                # Existing user - update info but preserve role
+                                update_data = {
+                                    'id': user_info['id'],
+                                    'email': user_info['email'],
+                                    'name': user_info.get('name', ''),
+                                    'given_name': user_info.get('given_name', ''),
+                                    'family_name': user_info.get('family_name', '')
+                                }
+                                db_manager.create_or_update_user(update_data)
+                                
+                                # Load from Firebase to get actual role
+                                try:
+                                    final_user_info = db_manager.get_user(user_id)
+                                    if not final_user_info:
+                                        final_user_info = user_info
+                                except:
+                                    final_user_info = user_info
+                            
+                            # Set session state
+                            st.session_state.authenticated = True
+                            st.session_state.user_id = final_user_info['id']
+                            st.session_state.user_info = final_user_info
+                            st.session_state.user_manager = SimpleUserManager()
+                            
+                            # Clear query params and redirect to app
+                            st.query_params.clear()
+                            st.success("✅ Login successful!")
+                            st.rerun()
+                            
+                    except Exception as e:
+                        st.error(f"❌ Database error: {str(e)}")
+                        st.info("Please try logging in again")
+                        if st.button("🔄 Try Again"):
+                            st.query_params.clear()
+                            st.rerun()
+                else:
+                    st.error("❌ Could not retrieve user information")
                     if st.button("🔄 Try Again"):
                         st.query_params.clear()
                         st.rerun()
+            else:
+                # Token exchange failed - error already displayed
+                if st.button("🔄 Try Again"):
+                    st.query_params.clear()
+                    st.rerun()
+    
+    elif 'error' in query_params:
+        # User cancelled or error occurred at Microsoft
+        error = query_params.get('error', ['unknown'])[0]
+        error_desc = query_params.get('error_description', ['No description'])[0]
+        
+        st.error("❌ Authentication Error")
+        st.warning(f"**Error:** {error}")
+        st.info(error_desc)
+        
+        if st.button("🔄 Try Again"):
+            st.query_params.clear()
+            st.rerun()
     
     else:
-        # No callback code - redirect directly to Microsoft login
+        # Show login page and redirect to Microsoft
         from urllib.parse import quote
         
+        # Build OAuth authorization URL
         authority = f"https://login.microsoftonline.com/{tenant_id}"
         
-        # Construct OAuth URL with proper scope encoding
+        # Define scopes
         scopes = "openid profile email https://graph.microsoft.com/User.Read"
         
+        # Build complete OAuth URL
         auth_url = (
             f"{authority}/oauth2/v2.0/authorize?"
             f"client_id={client_id}&"
             f"response_type=code&"
             f"redirect_uri={quote(redirect_uri, safe='')}&"
-            f"scope={scopes.replace(' ', '%20')}&"
-            f"response_mode=query"
+            f"response_mode=query&"
+            f"scope={quote(scopes)}&"
+            f"prompt=select_account"  # Force account selection
         )
         
-        # Show brief message while redirecting
-        st.title("🔐 CloudIDP Sign In")
-        st.info("🔄 Redirecting to Microsoft login...")
+        # Display login page
+        st.markdown("""
+        <style>
+        .login-container {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2E86DE;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .ms-button {
+            display: inline-block;
+            background-color: #0078D4;
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0,120,212,0.3);
+        }
+        .ms-button:hover {
+            background-color: #005A9E;
+            box-shadow: 0 4px 15px rgba(0,120,212,0.5);
+            transform: translateY(-2px);
+        }
+        </style>
+        """, unsafe_allow_html=True)
         
-        # Auto-redirect to Microsoft
-        st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
-        
-        # Fallback button in case auto-redirect doesn't work
-        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"""
-        <div style="text-align: center;">
-            <a href="{auth_url}" target="_self" style="
-                display: inline-block;
-                background-color: #0078d4;
-                color: white;
-                padding: 12px 30px;
-                text-decoration: none;
-                border-radius: 6px;
-                font-weight: bold;
-                font-size: 16px;">
-                🔷 If not redirected, click here
+        <div class="login-container">
+            <div class="logo">☁️</div>
+            <div class="title">CloudIDP</div>
+            <div class="subtitle">Multi-Cloud Infrastructure Intelligence Platform</div>
+            <br>
+            <a href="{auth_url}" target="_self" class="ms-button">
+                🔷 Sign in with Microsoft
             </a>
+            <br><br>
+            <p style="font-size: 12px; color: #999; margin-top: 30px;">
+                Enterprise SSO Authentication<br>
+                Secure • Fast • Reliable
+            </p>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Configuration check section (collapsible)
+        with st.expander("🔧 Troubleshooting Guide"):
+            st.markdown(f"""
+            **Current Configuration:**
+            - Client ID: `{client_id[:10]}...`
+            - Tenant ID: `{tenant_id}`
+            - Redirect URI: `{redirect_uri}`
+            
+            **Azure AD App Registration Checklist:**
+            
+            1. **Redirect URI Configuration:**
+               - Go to Azure Portal → App Registrations → Your App
+               - Navigate to Authentication
+               - Add Web platform if not already added
+               - Add this EXACT URL: `{redirect_uri}`
+               - Ensure no trailing slash
+            
+            2. **Token Configuration:**
+               - Under Authentication, scroll to "Implicit grant and hybrid flows"
+               - Check "ID tokens (used for implicit and hybrid flows)"
+            
+            3. **API Permissions:**
+               - Go to API permissions
+               - Ensure these are added:
+                 - Microsoft Graph → User.Read (Delegated)
+                 - openid, profile, email
+            
+            4. **Client Secret:**
+               - Go to Certificates & secrets
+               - Ensure client secret is not expired
+               - Secret value must match what's in Streamlit secrets
+            
+            5. **Supported Account Types:**
+               - For multitenant: "Accounts in any organizational directory"
+               - Tenant ID should be "common"
+            
+            **Common Issues:**
+            - ❌ "Redirect URI mismatch" → Check exact URL match
+            - ❌ "Invalid client" → Check client secret
+            - ❌ "Refused to connect" → Check redirect URI and HTTPS
+            - ❌ "CORS error" → Ensure redirect_uri matches exactly
+            """)
         
         st.stop()
 
