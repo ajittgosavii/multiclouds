@@ -1,15 +1,16 @@
 """
-Azure AD SSO Authentication - DEBUG VERSION
-Shows exact configuration being used to help diagnose issues
+Azure AD SSO Authentication - ULTRA DEBUG VERSION
+Maximum diagnostics to identify the exact issue
 """
 
 import streamlit as st
 from typing import Optional, Dict, List, Callable
 from functools import wraps
+import json
 
 
 # ============================================================================
-# ROLE-BASED ACCESS CONTROL (Same as before)
+# ROLE-BASED ACCESS CONTROL
 # ============================================================================
 
 class RoleManager:
@@ -107,8 +108,39 @@ class SimpleUserManager:
 
 
 # ============================================================================
-# AZURE AD AUTHENTICATION - DEBUG VERSION
+# AZURE AD AUTHENTICATION - ULTRA DEBUG VERSION
 # ============================================================================
+
+def test_azure_ad_connectivity(client_id: str, tenant_id: str) -> Dict:
+    """Test basic connectivity to Azure AD"""
+    import requests
+    
+    results = {
+        'discovery_endpoint': False,
+        'authorization_endpoint': False,
+        'token_endpoint': False,
+        'details': {}
+    }
+    
+    try:
+        # Test OpenID Connect discovery endpoint
+        discovery_url = f"https://login.microsoftonline.com/{tenant_id}/v2.0/.well-known/openid-configuration"
+        response = requests.get(discovery_url, timeout=5)
+        
+        if response.status_code == 200:
+            results['discovery_endpoint'] = True
+            config = response.json()
+            results['details']['authorization_endpoint'] = config.get('authorization_endpoint')
+            results['details']['token_endpoint'] = config.get('token_endpoint')
+            results['authorization_endpoint'] = True
+            results['token_endpoint'] = True
+        else:
+            results['details']['error'] = f"Discovery failed: {response.status_code}"
+    except Exception as e:
+        results['details']['error'] = str(e)
+    
+    return results
+
 
 def exchange_code_for_token(code: str, client_id: str, client_secret: str, 
                            redirect_uri: str, tenant_id: str = "common") -> Optional[Dict]:
@@ -133,59 +165,18 @@ def exchange_code_for_token(code: str, client_id: str, client_secret: str,
             error_data = response.json() if response.content else {}
             error_desc = error_data.get('error_description', f'HTTP {response.status_code}')
             
-            st.error(f"❌ Authentication Failed")
+            st.error(f"❌ Token Exchange Failed")
             
             with st.expander("🔍 View Error Details", expanded=True):
                 st.code(error_desc)
-                
-                # Provide specific fixes based on error type
-                if 'redirect_uri' in error_desc.lower():
-                    st.warning(f"""
-                    **Redirect URI Mismatch**
-                    
-                    The redirect_uri sent to Azure doesn't match what's registered.
-                    
-                    **Current redirect_uri:** `{redirect_uri}`
-                    
-                    **Steps to fix:**
-                    1. Go to Azure Portal → App Registrations → Your App
-                    2. Go to Authentication → Platform configurations
-                    3. Add/verify this EXACT URL: `{redirect_uri}`
-                    4. Make sure "ID tokens" is checked under Implicit grant
-                    """)
-                
-                elif 'client_secret' in error_desc.lower() or 'invalid_client' in error_desc.lower():
-                    st.warning("""
-                    **Invalid Client Secret**
-                    
-                    **Steps to fix:**
-                    1. Go to Azure Portal → App Registrations → Your App
-                    2. Go to Certificates & secrets
-                    3. Create a new client secret
-                    4. Update the secret in Streamlit secrets
-                    """)
-                
-                elif 'code' in error_desc.lower() or 'expired' in error_desc.lower():
-                    st.warning("""
-                    **Authorization Code Invalid/Expired**
-                    
-                    Authorization codes expire in 10 minutes and can only be used once.
-                    
-                    **Solution:** Click the "Sign in with Microsoft" button below to get a new code.
-                    """)
+                st.json(error_data)
             
             return None
         
         return response.json()
         
-    except requests.exceptions.Timeout:
-        st.error("❌ Connection timeout - please try again")
-        return None
-    except requests.exceptions.ConnectionError:
-        st.error("❌ Network connection error - please check your internet connection")
-        return None
     except Exception as e:
-        st.error(f"❌ Unexpected error: {str(e)}")
+        st.error(f"❌ Token exchange error: {str(e)}")
         return None
 
 
@@ -219,7 +210,7 @@ def get_user_info(access_token: str) -> Optional[Dict]:
 
 
 def render_login():
-    """Render login UI with DEBUG information"""
+    """Render login UI with ULTRA DEBUG information"""
     
     # Get Azure AD config
     try:
@@ -239,22 +230,7 @@ def render_login():
             
     except Exception as e:
         st.error("❌ Azure AD Configuration Error")
-        st.info("""
-        **Required Streamlit Secrets:**
-        
-        ```toml
-        [azure_ad]
-        client_id = "your-client-id-from-azure"
-        client_secret = "your-client-secret-from-azure"
-        tenant_id = "common"  # Use "common" for multitenant
-        redirect_uri = "https://hyperscaler.streamlit.app"  # Your app URL
-        ```
-        
-        **Important Notes:**
-        - No trailing slash in redirect_uri
-        - Must match EXACTLY in Azure AD App Registration
-        - Use "common" for multitenant, or your tenant ID for single tenant
-        """)
+        st.code(str(e))
         st.stop()
     
     # Check for OAuth callback
@@ -264,6 +240,8 @@ def render_login():
         # User returned from Microsoft with authorization code
         with st.spinner("🔐 Completing sign-in..."):
             code = query_params['code']
+            
+            st.info(f"📥 Received authorization code (length: {len(code)} characters)")
             
             # Exchange code for token
             token_response = exchange_code_for_token(
@@ -332,7 +310,6 @@ def render_login():
                             
                     except Exception as e:
                         st.error(f"❌ Database error: {str(e)}")
-                        st.info("Please try logging in again")
                         if st.button("🔄 Try Again"):
                             st.query_params.clear()
                             st.rerun()
@@ -342,7 +319,7 @@ def render_login():
                         st.query_params.clear()
                         st.rerun()
             else:
-                # Token exchange failed - error already displayed
+                # Token exchange failed
                 if st.button("🔄 Try Again"):
                     st.query_params.clear()
                     st.rerun()
@@ -352,8 +329,8 @@ def render_login():
         error = query_params.get('error', ['unknown'])[0]
         error_desc = query_params.get('error_description', ['No description'])[0]
         
-        st.error("❌ Authentication Error")
-        st.warning(f"**Error:** {error}")
+        st.error("❌ Authentication Error from Microsoft")
+        st.warning(f"**Error Code:** {error}")
         st.info(error_desc)
         
         if st.button("🔄 Try Again"):
@@ -361,7 +338,7 @@ def render_login():
             st.rerun()
     
     else:
-        # Show login page with DEBUG information
+        # Show login page with ULTRA DEBUG
         from urllib.parse import quote
         
         # Build OAuth authorization URL
@@ -381,12 +358,17 @@ def render_login():
             f"prompt=select_account"
         )
         
+        # Test Azure AD connectivity
+        st.markdown("### 🔬 Running Diagnostics...")
+        with st.spinner("Testing Azure AD connectivity..."):
+            connectivity = test_azure_ad_connectivity(client_id, tenant_id)
+        
         # Display login page
         st.markdown("""
         <style>
         .login-container {
             max-width: 600px;
-            margin: 50px auto;
+            margin: 30px auto;
             padding: 40px;
             background: white;
             border-radius: 12px;
@@ -425,30 +407,6 @@ def render_login():
             box-shadow: 0 4px 15px rgba(0,120,212,0.5);
             transform: translateY(-2px);
         }
-        .debug-box {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 30px;
-            text-align: left;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        .debug-item {
-            margin: 10px 0;
-            padding: 8px;
-            background: white;
-            border-radius: 4px;
-        }
-        .debug-label {
-            font-weight: bold;
-            color: #495057;
-        }
-        .debug-value {
-            color: #0078D4;
-            word-break: break-all;
-        }
         </style>
         """, unsafe_allow_html=True)
         
@@ -464,94 +422,175 @@ def render_login():
         </div>
         """, unsafe_allow_html=True)
         
-        # DEBUG INFORMATION - Always visible for troubleshooting
         st.markdown("---")
-        st.markdown("### 🔍 DEBUG INFORMATION")
         
-        st.markdown(f"""
-        <div class="debug-box">
-            <div class="debug-item">
-                <span class="debug-label">Client ID:</span><br>
-                <span class="debug-value">{client_id[:10]}...{client_id[-10:]}</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Tenant ID:</span><br>
-                <span class="debug-value">{tenant_id}</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Redirect URI (from secrets):</span><br>
-                <span class="debug-value">{redirect_uri_config}</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Redirect URI (cleaned, will be sent to Azure):</span><br>
-                <span class="debug-value">{redirect_uri}</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Trailing slash removed?</span><br>
-                <span class="debug-value">{'✅ YES' if redirect_uri != redirect_uri_config else '❌ NO (none found)'}</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">URLs match exactly?</span><br>
-                <span class="debug-value">{'✅ YES' if redirect_uri == redirect_uri_config.rstrip('/') else '❌ NO'}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # ULTRA DEBUG SECTION
+        st.markdown("## 🔍 ULTRA DEBUG DIAGNOSTICS")
         
-        # Critical configuration check
-        st.markdown("### ⚠️ CRITICAL: Azure AD Configuration Required")
+        # Connectivity Test Results
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if connectivity['discovery_endpoint']:
+                st.success("✅ Discovery Endpoint")
+            else:
+                st.error("❌ Discovery Endpoint")
         
-        st.error(f"""
-        **In Azure Portal, your Redirect URI MUST be exactly:**
-        ```
-        {redirect_uri}
-        ```
+        with col2:
+            if connectivity['authorization_endpoint']:
+                st.success("✅ Auth Endpoint")
+            else:
+                st.error("❌ Auth Endpoint")
         
-        **Steps:**
-        1. Go to Azure Portal → App Registrations → Your App
-        2. Click "Authentication" in left sidebar
-        3. Under "Redirect URIs", ensure this EXACT URL is listed: `{redirect_uri}`
-        4. Scroll down, check "ID tokens" under "Implicit grant and hybrid flows"
-        5. Click Save
-        6. Wait 1-2 minutes for changes to propagate
-        7. Come back here and click "Sign in with Microsoft" again
-        """)
+        with col3:
+            if connectivity['token_endpoint']:
+                st.success("✅ Token Endpoint")
+            else:
+                st.error("❌ Token Endpoint")
         
-        # Show the actual OAuth URL being used
-        with st.expander("🔗 View Full OAuth URL (for advanced debugging)"):
+        # Configuration Details
+        with st.expander("📋 Configuration Details", expanded=True):
+            st.markdown("### Current Configuration")
+            
+            config_data = {
+                "Client ID": f"{client_id[:15]}...{client_id[-15:]}",
+                "Tenant ID": tenant_id,
+                "Redirect URI (from secrets)": redirect_uri_config,
+                "Redirect URI (cleaned)": redirect_uri,
+                "Authority": authority,
+                "Scopes": scopes
+            }
+            
+            for key, value in config_data.items():
+                st.text(f"{key}: {value}")
+            
+            st.markdown("### Validation Checks")
+            checks = {
+                "Has trailing slash": redirect_uri_config != redirect_uri,
+                "Uses HTTPS": redirect_uri.startswith('https://'),
+                "Tenant ID format": tenant_id in ['common', 'organizations', 'consumers'] or len(tenant_id) == 36,
+                "Client ID format": len(client_id) == 36,
+                "Redirect URI matches": redirect_uri == "https://hyperscaler.streamlit.app"
+            }
+            
+            for check, result in checks.items():
+                if result:
+                    st.success(f"✅ {check}")
+                else:
+                    st.error(f"❌ {check}")
+        
+        # OAuth URL Details
+        with st.expander("🔗 OAuth URL Being Used"):
             st.code(auth_url, language="text")
-            st.caption("This is the exact URL you'll be redirected to when clicking 'Sign in with Microsoft'")
+            
+            st.markdown("### URL Components:")
+            st.json({
+                "authority": authority,
+                "endpoint": "/oauth2/v2.0/authorize",
+                "client_id": client_id[:20] + "...",
+                "response_type": "code",
+                "redirect_uri": redirect_uri,
+                "response_mode": "query",
+                "scope": scopes,
+                "prompt": "select_account"
+            })
         
-        # Troubleshooting guide
-        with st.expander("🛠️ Common Issues & Solutions"):
+        # Azure AD Requirements
+        with st.expander("⚠️ Azure AD Configuration Requirements"):
+            st.markdown(f"""
+            ### Critical: Verify in Azure Portal
+            
+            **1. Redirect URI Must Be:**
+            ```
+            {redirect_uri}
+            ```
+            
+            **2. Platform: Web**
+            - Not SPA (Single Page Application)
+            - Not Mobile
+            - Must be "Web" platform
+            
+            **3. Implicit Grant:**
+            - ✅ ID tokens (must be checked)
+            - ✅ Access tokens (recommended)
+            
+            **4. API Permissions:**
+            - Microsoft Graph → User.Read (Delegated)
+            - openid, profile, email
+            
+            **5. Supported Account Types:**
+            - For tenant_id="common": "Accounts in any organizational directory"
+            - Must match your tenant_id setting
+            
+            **6. Client Secret:**
+            - Must not be expired
+            - Must be the VALUE, not the Secret ID
+            """)
+        
+        # Browser Test
+        with st.expander("🌐 Browser Compatibility Test"):
             st.markdown("""
-            ### Issue 1: "Refused to Connect"
-            **Cause:** Redirect URI mismatch
+            **Current Browser Information:**
+            - JavaScript is enabled (Streamlit requires it)
+            - Cookies are enabled (required for OAuth)
+            - Can you access login.microsoftonline.com directly?
             
-            **Solution:**
-            - Verify the redirect URI above matches EXACTLY in Azure AD
-            - No trailing slash in either place
-            - Must be HTTPS, not HTTP
+            **Test:** [Click here to test Microsoft login endpoint](https://login.microsoftonline.com/)
             
-            ### Issue 2: Page Loads but Still Fails
-            **Cause:** Client secret or tenant ID issue
+            If that link doesn't work, you have a network/firewall issue blocking Microsoft services.
+            """)
+        
+        # Network Diagnostics
+        if not all(connectivity.values()):
+            st.error("🔴 **Network Connectivity Issue Detected**")
+            st.warning("""
+            Azure AD endpoints are not reachable. This could be due to:
+            - Corporate firewall blocking Microsoft services
+            - VPN or proxy issues
+            - Network restrictions
+            - ISP blocking
             
-            **Solution:**
-            - Check client secret is not expired in Azure AD
-            - Verify tenant_id is correct ("common" for multitenant)
+            **Try:**
+            1. Disable VPN
+            2. Try from a different network
+            3. Check with your IT department about firewall rules
+            4. Try from mobile hotspot
+            """)
+        
+        # Common Issues Guide
+        with st.expander("🆘 Common Issues & Solutions"):
+            st.markdown("""
+            ### Issue: "Refused to Connect"
             
-            ### Issue 3: Blank Page or Timeout
-            **Cause:** Network or Azure AD service issue
+            **Most Common Causes:**
             
-            **Solution:**
-            - Check your internet connection
-            - Try a different browser
-            - Clear browser cache
-            - Check Azure AD service status
+            1. **Redirect URI Mismatch** (even though yours looks correct)
+               - Azure shows: `https://hyperscaler.streamlit.app`
+               - Code sends: `https://hyperscaler.streamlit.app`
+               - But Azure might have multiple URIs and matching wrong one
+               - **Try:** Remove ALL other redirect URIs in Azure, keep only base URL
             
-            ### Need More Help?
-            1. Take a screenshot of the DEBUG INFORMATION above
-            2. Take a screenshot of Azure AD → Authentication settings
-            3. Compare the redirect URIs - they must match EXACTLY
+            2. **Platform Type Wrong**
+               - You might have "SPA" instead of "Web"
+               - **Fix:** Azure AD → Authentication → Add "Web" platform
+            
+            3. **ID Tokens Not Enabled**
+               - **Fix:** Check "ID tokens" box in Azure AD
+            
+            4. **Tenant ID Mismatch**
+               - Multitenant app needs "common" or "organizations"
+               - **Current:** {tenant_id}
+            
+            5. **Network/Firewall**
+               - Corporate firewall blocking OAuth
+               - **Test:** Try from personal device/network
+            
+            6. **Browser Extensions**
+               - Privacy/ad blockers interfering
+               - **Test:** Disable ALL extensions
+            
+            7. **App Permissions Not Granted**
+               - Need admin consent for API permissions
+               - **Fix:** Azure AD → API permissions → Grant admin consent
             """)
         
         st.stop()
