@@ -4,6 +4,7 @@ Practical tools, ready-to-use code, and AI help for Azure developers
 """
 
 import streamlit as st
+from auth_azure_sso import require_permission
 import json
 import uuid
 
