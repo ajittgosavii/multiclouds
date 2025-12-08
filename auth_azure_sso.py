@@ -292,7 +292,7 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Clean branded login page with logo
+        # Clean branded login page with logo - FIXED SVG RENDERING
         st.markdown("""
         <style>
         .login-container {
@@ -311,6 +311,7 @@ def render_login():
             width: 180px;
             height: 180px;
             margin: 0 auto;
+            display: block;
         }
         .title {
             font-size: 32px;
@@ -324,44 +325,32 @@ def render_login():
             margin-bottom: 40px;
             font-weight: 500;
         }
-        .info-text {
-            font-size: 14px;
-            color: #999;
-            margin-top: 30px;
-            line-height: 1.6;
-        }
         </style>
+        """, unsafe_allow_html=True)
         
+        # Render the logo and text properly
+        st.markdown("""
         <div class="login-container">
             <div class="logo-container">
                 <svg class="logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Cloud outline -->
                     <path d="M50 100 Q30 100 30 80 Q30 60 50 60 Q50 40 70 40 Q90 40 90 60 Q110 60 110 40 Q130 40 130 60 Q150 60 150 80 Q170 80 170 100 Q170 120 150 120 Q150 140 130 140 Q110 140 110 120 Q90 120 90 140 Q70 140 70 120 Q50 120 50 100 Z" 
                           fill="none" 
                           stroke="#0078D4" 
                           stroke-width="6"/>
-                    
-                    <!-- Left brain hemisphere (blue) -->
                     <path d="M75 75 Q75 65 85 65 Q85 75 85 85 L85 90 Q80 90 80 85 Q75 85 75 90 Q70 90 70 85 Q70 75 75 75 Z"
                           fill="#4FC3F7"/>
                     <path d="M75 85 Q75 80 80 80 L80 95 Q75 95 75 90 Z"
                           fill="#29B6F6"/>
                     <path d="M65 95 Q70 95 75 90 Q75 100 70 105 Q65 105 65 100 Z"
                           fill="#0288D1"/>
-                    
-                    <!-- Right brain top (green) -->
                     <path d="M115 65 Q120 65 120 70 Q125 70 125 75 Q125 85 120 90 Q115 90 115 80 Q115 70 115 65 Z"
                           fill="#66BB6A"/>
                     <path d="M115 80 Q120 80 125 85 Q125 95 120 95 Q115 95 115 85 Z"
                           fill="#4CAF50"/>
-                    
-                    <!-- Right brain bottom (orange) -->
                     <path d="M115 95 Q120 95 125 100 Q125 110 120 115 Q115 115 115 105 Q110 105 110 100 Q110 95 115 95 Z"
                           fill="#FFA726"/>
                     <path d="M115 105 Q120 105 120 115 Q115 120 115 115 Z"
                           fill="#FF9800"/>
-                    
-                    <!-- Center divider -->
                     <line x1="100" y1="60" x2="100" y2="125" 
                           stroke="#0078D4" 
                           stroke-width="4"/>
@@ -376,11 +365,12 @@ def render_login():
         # Prominent sign-in button
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Use Streamlit's link button for best compatibility
-        if st.button("🔷 Sign in with Microsoft", type="primary", use_container_width=True):
-            st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🔷 Sign in with Microsoft", type="primary", use_container_width=True, key="signin_button"):
+                st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
         
-        # Also provide direct link
+        # Direct link below button
         st.markdown(f"""
         <div style="text-align: center; margin-top: 20px;">
             <a href="{auth_url}" style="color: #0078D4; font-size: 16px; text-decoration: none; font-weight: 500;">
@@ -391,8 +381,8 @@ def render_login():
         
         st.markdown("""
         <div style="text-align: center; margin-top: 40px; padding: 20px; color: #999; font-size: 13px;">
-            <p>✓ Supports work, school, and personal Microsoft accounts</p>
-            <p>✓ Enterprise SSO • Secure • Reliable</p>
+            <p style="margin: 5px 0;">✓ Supports work, school, and personal Microsoft accounts</p>
+            <p style="margin: 5px 0;">✓ Enterprise SSO • Secure • Reliable</p>
         </div>
         """, unsafe_allow_html=True)
         
