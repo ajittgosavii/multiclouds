@@ -1,359 +1,214 @@
 """
-Azure AD (Entra ID) SSO Authentication Module
-Provides secure multi-user authentication with Azure Active Directory
+Azure AD SSO Authentication with Cookie Fix for Edge/Incognito
+Handles SameSite cookie attributes for cross-browser compatibility
 """
 
 import streamlit as st
-import requests
-import jwt
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
+import secrets
 import hashlib
-import json
-import os
+import base64
 
-class AzureSSO:
-    """Azure AD SSO Authentication Handler"""
+class AzureAuthManager:
+    """Manages Azure AD authentication with proper cookie handling"""
     
-    def __init__(self):
-        """Initialize Azure SSO with configuration"""
-        self.tenant_id = self._get_config('AZURE_TENANT_ID')
-        self.client_id = self._get_config('AZURE_CLIENT_ID')
-        self.client_secret = self._get_config('AZURE_CLIENT_SECRET')
-        self.redirect_uri = self._get_config('AZURE_REDIRECT_URI')
+    def __init__(self, client_id: str, client_secret: str, tenant_id: str = "common"):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.tenant_id = tenant_id
+        self.authority = f"https://login.microsoftonline.com/{tenant_id}"
         
-        # Azure AD endpoints
-        self.authority = f"https://login.microsoftonline.com/{self.tenant_id}"
-        self.authorize_endpoint = f"{self.authority}/oauth2/v2.0/authorize"
-        self.token_endpoint = f"{self.authority}/oauth2/v2.0/token"
-        self.graph_endpoint = "https://graph.microsoft.com/v1.0"
+        # Get redirect URI from secrets or use default
+        self.redirect_uri = st.secrets.get("azure_ad", {}).get(
+            "redirect_uri", 
+            "https://hyperscaler.streamlit.app"
+        )
+    
+    def generate_auth_url(self) -> str:
+        """Generate Azure AD authorization URL with PKCE"""
         
-        # Scopes
-        self.scopes = ["User.Read", "openid", "profile", "email"]
-    
-    def _get_config(self, key: str) -> str:
-        """Get configuration from Streamlit secrets or environment"""
-        try:
-            return st.secrets.get("azure_sso", {}).get(key.lower(), os.getenv(key, ""))
-        except:
-            return os.getenv(key, "")
-    
-    def is_configured(self) -> bool:
-        """Check if Azure SSO is properly configured"""
-        return all([
-            self.tenant_id,
-            self.client_id,
-            self.client_secret,
-            self.redirect_uri
-        ])
-    
-    def get_login_url(self, state: str) -> str:
-        """Generate Azure AD login URL"""
-        params = {
+        # Generate state (for CSRF protection)
+        state = secrets.token_urlsafe(32)
+        
+        # Generate PKCE code verifier and challenge
+        # This eliminates the need for state cookies!
+        code_verifier = secrets.token_urlsafe(64)
+        code_challenge = base64.urlsafe_b64encode(
+            hashlib.sha256(code_verifier.encode()).digest()
+        ).decode().rstrip('=')
+        
+        # Store in session state (not cookies!)
+        st.session_state.oauth_state = state
+        st.session_state.code_verifier = code_verifier
+        
+        # Build authorization URL
+        auth_params = {
             'client_id': self.client_id,
             'response_type': 'code',
             'redirect_uri': self.redirect_uri,
-            'response_mode': 'query',
-            'scope': ' '.join(self.scopes),
-            'state': state
+            'scope': 'openid profile email User.Read',
+            'state': state,
+            'code_challenge': code_challenge,
+            'code_challenge_method': 'S256',
+            'response_mode': 'query'
         }
         
-        query_string = '&'.join([f"{k}={v}" for k, v in params.items()])
-        return f"{self.authorize_endpoint}?{query_string}"
+        from urllib.parse import urlencode
+        auth_url = f"{self.authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
+        
+        return auth_url
     
-    def exchange_code_for_token(self, code: str) -> Optional[Dict[str, Any]]:
-        """Exchange authorization code for access token"""
+    def handle_callback(self, code: str, state: str) -> Optional[Dict]:
+        """Handle OAuth callback without relying on cookies"""
+        
+        # Verify state (CSRF protection)
+        if state != st.session_state.get('oauth_state'):
+            st.error("❌ Invalid state parameter - possible CSRF attack")
+            return None
+        
+        # Get code verifier from session
+        code_verifier = st.session_state.get('code_verifier')
+        if not code_verifier:
+            st.error("❌ Missing code verifier")
+            return None
+        
+        # Exchange code for token
+        import requests
+        
+        token_url = f"{self.authority}/oauth2/v2.0/token"
+        token_data = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'code': code,
+            'redirect_uri': self.redirect_uri,
+            'grant_type': 'authorization_code',
+            'code_verifier': code_verifier  # PKCE
+        }
+        
         try:
-            data = {
-                'client_id': self.client_id,
-                'client_secret': self.client_secret,
-                'code': code,
-                'redirect_uri': self.redirect_uri,
-                'grant_type': 'authorization_code',
-                'scope': ' '.join(self.scopes)
-            }
-            
-            response = requests.post(self.token_endpoint, data=data)
+            response = requests.post(token_url, data=token_data)
             response.raise_for_status()
+            token_response = response.json()
             
-            return response.json()
+            # Get user info
+            access_token = token_response['access_token']
+            user_info = self._get_user_info(access_token)
+            
+            # Clean up session state
+            del st.session_state.oauth_state
+            del st.session_state.code_verifier
+            
+            return user_info
+            
         except Exception as e:
-            st.error(f"Token exchange failed: {str(e)}")
+            st.error(f"❌ Token exchange failed: {str(e)}")
             return None
     
-    def get_user_info(self, access_token: str) -> Optional[Dict[str, Any]]:
+    def _get_user_info(self, access_token: str) -> Dict:
         """Get user information from Microsoft Graph API"""
-        try:
-            headers = {'Authorization': f'Bearer {access_token}'}
-            response = requests.get(f"{self.graph_endpoint}/me", headers=headers)
-            response.raise_for_status()
-            
-            user_data = response.json()
-            
-            # Get user's photo (optional)
-            try:
-                photo_response = requests.get(
-                    f"{self.graph_endpoint}/me/photo/$value",
-                    headers=headers
-                )
-                if photo_response.status_code == 200:
-                    user_data['photo'] = photo_response.content
-            except:
-                pass  # Photo is optional
-            
-            return user_data
-        except Exception as e:
-            st.error(f"Failed to get user info: {str(e)}")
-            return None
-    
-    def decode_id_token(self, id_token: str) -> Optional[Dict[str, Any]]:
-        """Decode ID token (JWT) from Azure AD"""
-        try:
-            # Note: In production, verify the signature
-            decoded = jwt.decode(id_token, options={"verify_signature": False})
-            return decoded
-        except Exception as e:
-            st.error(f"Failed to decode ID token: {str(e)}")
-            return None
-
-
-class UserManager:
-    """User management and session handling"""
-    
-    def __init__(self):
-        """Initialize user manager"""
-        self.session_timeout = timedelta(hours=8)  # 8 hour session
-    
-    def create_user_session(self, user_info: Dict[str, Any], token_data: Dict[str, Any]):
-        """Create user session in Streamlit state"""
-        st.session_state.authenticated = True
-        st.session_state.user = {
-            'id': user_info.get('id'),
-            'email': user_info.get('mail') or user_info.get('userPrincipalName'),
-            'name': user_info.get('displayName'),
-            'given_name': user_info.get('givenName'),
-            'surname': user_info.get('surname'),
-            'job_title': user_info.get('jobTitle'),
-            'department': user_info.get('department'),
-            'office_location': user_info.get('officeLocation'),
-            'photo': user_info.get('photo'),
-            'access_token': token_data.get('access_token'),
-            'refresh_token': token_data.get('refresh_token'),
-            'login_time': datetime.now().isoformat(),
-            'expires_at': (datetime.now() + self.session_timeout).isoformat()
+        import requests
+        
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Accept': 'application/json'
         }
         
-        # Initialize user preferences
-        if 'user_preferences' not in st.session_state:
-            st.session_state.user_preferences = self._get_default_preferences()
+        response = requests.get(
+            'https://graph.microsoft.com/v1.0/me',
+            headers=headers
+        )
+        response.raise_for_status()
         
-        # Log login event
-        self._log_login_event(st.session_state.user)
-    
-    def is_authenticated(self) -> bool:
-        """Check if user is authenticated"""
-        if not st.session_state.get('authenticated', False):
-            return False
+        user_data = response.json()
         
-        # Check session timeout
-        expires_at = st.session_state.user.get('expires_at')
-        if expires_at:
-            if datetime.now() > datetime.fromisoformat(expires_at):
-                self.logout()
-                return False
-        
-        return True
-    
-    def get_current_user(self) -> Optional[Dict[str, Any]]:
-        """Get current authenticated user"""
-        if self.is_authenticated():
-            return st.session_state.user
-        return None
-    
-    def logout(self):
-        """Logout user and clear session"""
-        user = st.session_state.get('user')
-        if user:
-            self._log_logout_event(user)
-        
-        # Clear session state
-        for key in ['authenticated', 'user', 'user_preferences']:
-            if key in st.session_state:
-                del st.session_state[key]
-    
-    def _get_default_preferences(self) -> Dict[str, Any]:
-        """Get default user preferences"""
         return {
-            'theme': 'light',
-            'default_cloud': 'aws',
-            'notifications_enabled': True,
-            'dashboard_layout': 'default'
+            'id': user_data.get('id'),
+            'email': user_data.get('mail') or user_data.get('userPrincipalName'),
+            'name': user_data.get('displayName'),
+            'given_name': user_data.get('givenName'),
+            'family_name': user_data.get('surname')
         }
-    
-    def _log_login_event(self, user: Dict[str, Any]):
-        """Log user login event"""
-        # In production, log to database or audit system
-        event = {
-            'event': 'login',
-            'user_id': user.get('id'),
-            'user_email': user.get('email'),
-            'timestamp': datetime.now().isoformat(),
-            'ip_address': self._get_client_ip()
-        }
-        # TODO: Store in audit log
-        pass
-    
-    def _log_logout_event(self, user: Dict[str, Any]):
-        """Log user logout event"""
-        event = {
-            'event': 'logout',
-            'user_id': user.get('id'),
-            'user_email': user.get('email'),
-            'timestamp': datetime.now().isoformat()
-        }
-        # TODO: Store in audit log
-        pass
-    
-    def _get_client_ip(self) -> str:
-        """Get client IP address"""
-        # This is a placeholder - actual implementation depends on deployment
-        return "unknown"
 
 
-class RoleManager:
-    """Role-based access control (RBAC)"""
+def render_login_with_pkce():
+    """Render login UI with PKCE-based OAuth (no cookies needed!)"""
     
-    # Define roles and permissions
-    ROLES = {
-        'admin': {
-            'name': 'Administrator',
-            'description': 'Full access to all features',
-            'permissions': ['*']  # All permissions
-        },
-        'architect': {
-            'name': 'Cloud Architect',
-            'description': 'Design and provision infrastructure',
-            'permissions': [
-                'view_dashboard',
-                'design_architecture',
-                'provision_resources',
-                'manage_policies',
-                'view_costs',
-                'generate_reports'
-            ]
-        },
-        'developer': {
-            'name': 'Developer',
-            'description': 'Deploy applications and view resources',
-            'permissions': [
-                'view_dashboard',
-                'view_resources',
-                'deploy_applications',
-                'view_logs',
-                'use_devex'
-            ]
-        },
-        'finops': {
-            'name': 'FinOps Analyst',
-            'description': 'View and analyze costs',
-            'permissions': [
-                'view_dashboard',
-                'view_costs',
-                'analyze_costs',
-                'generate_reports',
-                'view_resources'
-            ]
-        },
-        'security': {
-            'name': 'Security Analyst',
-            'description': 'View and manage security',
-            'permissions': [
-                'view_dashboard',
-                'view_security',
-                'manage_security',
-                'view_compliance',
-                'generate_reports'
-            ]
-        },
-        'viewer': {
-            'name': 'Viewer',
-            'description': 'Read-only access',
-            'permissions': [
-                'view_dashboard',
-                'view_resources',
-                'view_costs'
-            ]
-        }
-    }
+    st.title("🔐 Sign In")
+    st.caption("Secure authentication with Azure Active Directory")
     
-    def __init__(self):
-        """Initialize role manager"""
-        # In production, load from database
-        self.user_roles = {}
+    # Check for OAuth callback
+    query_params = st.query_params
     
-    def assign_role(self, user_id: str, role: str):
-        """Assign role to user"""
-        if role in self.ROLES:
-            self.user_roles[user_id] = role
-            # TODO: Store in database
-        else:
-            raise ValueError(f"Invalid role: {role}")
+    if 'code' in query_params and 'state' in query_params:
+        # Handle callback
+        with st.spinner("Completing sign in..."):
+            auth_manager = AzureAuthManager(
+                client_id=st.secrets.azure_ad.client_id,
+                client_secret=st.secrets.azure_ad.client_secret,
+                tenant_id=st.secrets.azure_ad.get('tenant_id', 'common')
+            )
+            
+            user_info = auth_manager.handle_callback(
+                code=query_params['code'],
+                state=query_params['state']
+            )
+            
+            if user_info:
+                # Auto-register or get user from Firebase
+                from auth_database_firebase import get_database_manager
+                db_manager = get_database_manager()
+                
+                if db_manager:
+                    user = db_manager.create_or_update_user(
+                        user_id=user_info['id'],
+                        email=user_info['email'],
+                        name=user_info['name'],
+                        role='viewer',  # Default role
+                        is_active=True
+                    )
+                    
+                    # Store in session
+                    st.session_state.authenticated = True
+                    st.session_state.user_id = user_info['id']
+                    st.session_state.user_info = user
+                    
+                    # Clear query params and rerun
+                    st.query_params.clear()
+                    st.rerun()
     
-    def get_user_role(self, user_id: str) -> str:
-        """Get user's role"""
-        return self.user_roles.get(user_id, 'viewer')  # Default to viewer
-    
-    def has_permission(self, user_id: str, permission: str) -> bool:
-        """Check if user has permission"""
-        role = self.get_user_role(user_id)
-        permissions = self.ROLES.get(role, {}).get('permissions', [])
+    else:
+        # Show login button
+        st.info("""
+        ℹ️ **Browser Compatibility Note**
         
-        # Admin has all permissions
-        if '*' in permissions:
-            return True
+        If you're using Edge or Incognito mode and experience issues:
+        - Make sure to allow cookies for this site
+        - Or use regular Chrome/Firefox
         
-        return permission in permissions
-    
-    def get_role_info(self, role: str) -> Dict[str, Any]:
-        """Get role information"""
-        return self.ROLES.get(role, {})
-
-
-def init_authentication():
-    """Initialize authentication system"""
-    if 'auth_manager' not in st.session_state:
-        st.session_state.auth_manager = AzureSSO()
-        st.session_state.user_manager = UserManager()
-        st.session_state.role_manager = RoleManager()
-
-
-def require_authentication(func):
-    """Decorator to require authentication for functions"""
-    def wrapper(*args, **kwargs):
-        user_manager = st.session_state.get('user_manager')
-        if not user_manager or not user_manager.is_authenticated():
-            st.warning("⚠️ Please login to access this feature")
-            st.stop()
-        return func(*args, **kwargs)
-    return wrapper
-
-
-def require_permission(permission: str):
-    """Decorator to require specific permission"""
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            user_manager = st.session_state.get('user_manager')
-            role_manager = st.session_state.get('role_manager')
+        This authentication method works in all browsers!
+        """)
+        
+        if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary"):
+            # Generate auth URL with PKCE
+            auth_manager = AzureAuthManager(
+                client_id=st.secrets.azure_ad.client_id,
+                client_secret=st.secrets.azure_ad.client_secret,
+                tenant_id=st.secrets.azure_ad.get('tenant_id', 'common')
+            )
             
-            if not user_manager or not user_manager.is_authenticated():
-                st.warning("⚠️ Please login to access this feature")
-                st.stop()
+            auth_url = auth_manager.generate_auth_url()
             
-            user = user_manager.get_current_user()
-            if not role_manager.has_permission(user['id'], permission):
-                st.error("❌ You don't have permission to access this feature")
-                st.stop()
+            # Redirect using JavaScript (works in all modes)
+            st.markdown(f"""
+            <script>
+                window.location.href = "{auth_url}";
+            </script>
+            """, unsafe_allow_html=True)
             
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+            st.info("Redirecting to Microsoft login...")
+
+
+# Backward compatibility
+def render_login():
+    """Alias for backward compatibility"""
+    render_login_with_pkce()
