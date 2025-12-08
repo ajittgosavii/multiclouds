@@ -354,16 +354,13 @@ def render_login():
             st.rerun()
     
     else:
-        # Show login page with WORKING button
+        # Professional login page
         from urllib.parse import quote
         
         # Build OAuth authorization URL
         authority = f"https://login.microsoftonline.com/{tenant_id}"
-        
-        # Define scopes
         scopes = "openid profile email https://graph.microsoft.com/User.Read"
         
-        # Build complete OAuth URL
         auth_url = (
             f"{authority}/oauth2/v2.0/authorize?"
             f"client_id={client_id}&"
@@ -374,32 +371,34 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Display login page with SIMPLE WORKING BUTTON
+        # Professional styled login page
         st.markdown("""
         <style>
         .login-container {
             max-width: 500px;
             margin: 100px auto;
-            padding: 40px;
+            padding: 50px;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
             text-align: center;
         }
         .logo {
-            font-size: 64px;
-            margin-bottom: 20px;
+            font-size: 72px;
+            margin-bottom: 25px;
         }
         .title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #2E86DE;
-            margin-bottom: 10px;
+            font-size: 36px;
+            font-weight: 700;
+            color: #0078D4;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
         }
         .subtitle {
             font-size: 16px;
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 45px;
+            font-weight: 400;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -412,36 +411,15 @@ def render_login():
         </div>
         """, unsafe_allow_html=True)
         
-        # Use Streamlit's link_button - THIS IS THE KEY FIX!
-        st.link_button(
-            label="🔷 Sign in with Microsoft",
-            url=auth_url,
-            use_container_width=False
-        )
-        
-        st.markdown("""
-        <div style="text-align: center; margin-top: 30px;">
-            <p style="font-size: 12px; color: #999;">
-                Enterprise SSO Authentication<br>
-                Secure • Fast • Reliable<br>
-                Supports work, school, and personal Microsoft accounts
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Configuration info in expander
-        with st.expander("🔧 Configuration Info"):
-            st.markdown(f"""
-            **Current Configuration:**
-            - Tenant ID: `{tenant_id}`
-            - Redirect URI: `{redirect_uri}`
-            - Account types: Work, school, and personal Microsoft accounts
-            
-            **If sign-in fails:**
-            1. Ensure Azure AD app supports personal Microsoft accounts
-            2. Check that redirect URI matches exactly in Azure AD
-            3. Verify client secret is not expired
-            """)
+        # Centered sign-in button
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.link_button(
+                label="🔷 Sign in with Microsoft",
+                url=auth_url,
+                use_container_width=True,
+                type="primary"
+            )
         
         st.stop()
 
