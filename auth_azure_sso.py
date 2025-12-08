@@ -1,12 +1,11 @@
 """
-Azure AD SSO Authentication - Simple Auto-Redirect Version
-Simplified for maximum Streamlit compatibility
+Azure AD SSO Authentication - FIXED BUTTON VERSION
+Works with personal Microsoft accounts
 """
 
 import streamlit as st
 from typing import Optional, Dict, List, Callable
 from functools import wraps
-import streamlit.components.v1 as components
 
 
 # ============================================================================
@@ -108,7 +107,7 @@ class SimpleUserManager:
 
 
 # ============================================================================
-# AZURE AD AUTHENTICATION
+# AZURE AD AUTHENTICATION - FIXED BUTTON VERSION
 # ============================================================================
 
 def exchange_code_for_token(code: str, client_id: str, client_secret: str, 
@@ -133,13 +132,58 @@ def exchange_code_for_token(code: str, client_id: str, client_secret: str,
         if response.status_code != 200:
             error_data = response.json() if response.content else {}
             error_desc = error_data.get('error_description', f'HTTP {response.status_code}')
-            st.error(f"❌ Authentication Failed: {error_desc}")
+            
+            st.error(f"❌ Authentication Failed")
+            
+            with st.expander("🔍 View Error Details", expanded=True):
+                st.code(error_desc)
+                
+                # Provide specific fixes based on error type
+                if 'redirect_uri' in error_desc.lower():
+                    st.warning(f"""
+                    **Redirect URI Mismatch**
+                    
+                    The redirect_uri must match EXACTLY in Azure AD.
+                    
+                    Current redirect_uri: `{redirect_uri}`
+                    """)
+                
+                elif 'unauthorized_client' in error_desc.lower():
+                    st.warning("""
+                    **Unauthorized Client**
+                    
+                    This usually means:
+                    1. Personal Microsoft accounts not enabled in Azure AD
+                    2. Or the app is not configured for the account type being used
+                    
+                    **Fix:**
+                    - Go to Azure Portal → App registrations → Your App
+                    - Change "Supported account types" to include personal Microsoft accounts
+                    """)
+                
+                elif 'client_secret' in error_desc.lower() or 'invalid_client' in error_desc.lower():
+                    st.warning("""
+                    **Invalid Client Secret**
+                    
+                    **Steps to fix:**
+                    1. Go to Azure Portal → App Registrations → Your App
+                    2. Go to Certificates & secrets
+                    3. Create a new client secret
+                    4. Update the secret in Streamlit secrets
+                    """)
+            
             return None
         
         return response.json()
         
+    except requests.exceptions.Timeout:
+        st.error("❌ Connection timeout - please try again")
+        return None
+    except requests.exceptions.ConnectionError:
+        st.error("❌ Network connection error - please check your internet connection")
+        return None
     except Exception as e:
-        st.error(f"❌ Authentication error: {str(e)}")
+        st.error(f"❌ Unexpected error: {str(e)}")
         return None
 
 
@@ -173,30 +217,48 @@ def get_user_info(access_token: str) -> Optional[Dict]:
 
 
 def render_login():
-    """Render login with auto-redirect to Microsoft"""
+    """Render login UI with WORKING button"""
     
     # Get Azure AD config
     try:
         client_id = st.secrets.azure_ad.client_id
         client_secret = st.secrets.azure_ad.client_secret
         tenant_id = st.secrets.azure_ad.get('tenant_id', 'common')
-        redirect_uri = st.secrets.azure_ad.get('redirect_uri', '').rstrip('/')
         
+        # Get redirect URI and clean it
+        redirect_uri_config = st.secrets.azure_ad.get('redirect_uri', '')
+        
+        # Clean the redirect_uri
+        redirect_uri = redirect_uri_config.rstrip('/')
+        
+        # Validate configuration
         if not all([client_id, client_secret, redirect_uri]):
             raise ValueError("Missing required configuration")
             
     except Exception as e:
         st.error("❌ Azure AD Configuration Error")
+        st.info("""
+        **Required Streamlit Secrets:**
+        
+        ```toml
+        [azure_ad]
+        client_id = "your-client-id-from-azure"
+        client_secret = "your-client-secret-from-azure"
+        tenant_id = "common"  # For both work and personal accounts
+        redirect_uri = "https://hyperscaler.streamlit.app"
+        ```
+        """)
         st.stop()
     
     # Check for OAuth callback
     query_params = st.query_params
     
     if 'code' in query_params:
-        # Handle OAuth callback
+        # User returned from Microsoft with authorization code
         with st.spinner("🔐 Completing sign-in..."):
             code = query_params['code']
             
+            # Exchange code for token
             token_response = exchange_code_for_token(
                 code=code,
                 client_id=client_id,
@@ -206,9 +268,11 @@ def render_login():
             )
             
             if token_response and 'access_token' in token_response:
+                # Get user info from Microsoft Graph
                 user_info = get_user_info(token_response['access_token'])
                 
                 if user_info:
+                    # Register/update user in Firebase
                     try:
                         from auth_database_firebase import get_database_manager
                         db_manager = get_database_manager()
@@ -216,6 +280,7 @@ def render_login():
                         if db_manager:
                             user_id = user_info['id']
                             
+                            # Check if user exists
                             try:
                                 existing_user = db_manager.get_user(user_id)
                                 is_new_user = not (existing_user and isinstance(existing_user, dict))
@@ -223,11 +288,13 @@ def render_login():
                                 is_new_user = True
                             
                             if is_new_user:
+                                # New user - set defaults
                                 user_info['role'] = 'viewer'
                                 user_info['is_active'] = True
                                 db_manager.create_or_update_user(user_info)
                                 final_user_info = user_info
                             else:
+                                # Existing user - update info but preserve role
                                 update_data = {
                                     'id': user_info['id'],
                                     'email': user_info['email'],
@@ -237,6 +304,7 @@ def render_login():
                                 }
                                 db_manager.create_or_update_user(update_data)
                                 
+                                # Load from Firebase to get actual role
                                 try:
                                     final_user_info = db_manager.get_user(user_id)
                                     if not final_user_info:
@@ -244,26 +312,36 @@ def render_login():
                                 except:
                                     final_user_info = user_info
                             
+                            # Set session state
                             st.session_state.authenticated = True
                             st.session_state.user_id = final_user_info['id']
                             st.session_state.user_info = final_user_info
                             st.session_state.user_manager = SimpleUserManager()
                             
+                            # Clear query params and redirect to app
                             st.query_params.clear()
                             st.success("✅ Login successful!")
                             st.rerun()
                             
                     except Exception as e:
                         st.error(f"❌ Database error: {str(e)}")
+                        st.info("Please try logging in again")
                         if st.button("🔄 Try Again"):
                             st.query_params.clear()
                             st.rerun()
+                else:
+                    st.error("❌ Could not retrieve user information")
+                    if st.button("🔄 Try Again"):
+                        st.query_params.clear()
+                        st.rerun()
             else:
+                # Token exchange failed - error already displayed
                 if st.button("🔄 Try Again"):
                     st.query_params.clear()
                     st.rerun()
     
     elif 'error' in query_params:
+        # User cancelled or error occurred at Microsoft
         error = query_params.get('error', ['unknown'])[0]
         error_desc = query_params.get('error_description', ['No description'])[0]
         
@@ -276,12 +354,16 @@ def render_login():
             st.rerun()
     
     else:
-        # Build OAuth URL and auto-redirect
+        # Show login page with WORKING button
         from urllib.parse import quote
         
+        # Build OAuth authorization URL
         authority = f"https://login.microsoftonline.com/{tenant_id}"
+        
+        # Define scopes
         scopes = "openid profile email https://graph.microsoft.com/User.Read"
         
+        # Build complete OAuth URL
         auth_url = (
             f"{authority}/oauth2/v2.0/authorize?"
             f"client_id={client_id}&"
@@ -292,96 +374,74 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Clean branded login page with logo - COMPLETE FIX
+        # Display login page with SIMPLE WORKING BUTTON
         st.markdown("""
         <style>
         .login-container {
-            max-width: 600px;
-            margin: 60px auto;
-            padding: 50px;
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 40px;
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             text-align: center;
         }
-        .logo-container {
-            margin-bottom: 30px;
-        }
         .logo {
-            width: 180px;
-            height: 180px;
-            margin: 0 auto;
-            display: block;
+            font-size: 64px;
+            margin-bottom: 20px;
         }
         .title {
             font-size: 32px;
             font-weight: bold;
-            color: #0078D4;
-            margin: 20px 0 10px 0;
+            color: #2E86DE;
+            margin-bottom: 10px;
         }
         .subtitle {
-            font-size: 18px;
+            font-size: 16px;
             color: #666;
-            margin-bottom: 40px;
-            font-weight: 500;
+            margin-bottom: 30px;
         }
         </style>
-        
-        <div class="login-container">
-            <div class="logo-container">
-                <svg class="logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 100 Q30 100 30 80 Q30 60 50 60 Q50 40 70 40 Q90 40 90 60 Q110 60 110 40 Q130 40 130 60 Q150 60 150 80 Q170 80 170 100 Q170 120 150 120 Q150 140 130 140 Q110 140 110 120 Q90 120 90 140 Q70 140 70 120 Q50 120 50 100 Z" 
-                          fill="none" 
-                          stroke="#0078D4" 
-                          stroke-width="6"/>
-                    <path d="M75 75 Q75 65 85 65 Q85 75 85 85 L85 90 Q80 90 80 85 Q75 85 75 90 Q70 90 70 85 Q70 75 75 75 Z"
-                          fill="#4FC3F7"/>
-                    <path d="M75 85 Q75 80 80 80 L80 95 Q75 95 75 90 Z"
-                          fill="#29B6F6"/>
-                    <path d="M65 95 Q70 95 75 90 Q75 100 70 105 Q65 105 65 100 Z"
-                          fill="#0288D1"/>
-                    <path d="M115 65 Q120 65 120 70 Q125 70 125 75 Q125 85 120 90 Q115 90 115 80 Q115 70 115 65 Z"
-                          fill="#66BB6A"/>
-                    <path d="M115 80 Q120 80 125 85 Q125 95 120 95 Q115 95 115 85 Z"
-                          fill="#4CAF50"/>
-                    <path d="M115 95 Q120 95 125 100 Q125 110 120 115 Q115 115 115 105 Q110 105 110 100 Q110 95 115 95 Z"
-                          fill="#FFA726"/>
-                    <path d="M115 105 Q120 105 120 115 Q115 120 115 115 Z"
-                          fill="#FF9800"/>
-                    <line x1="100" y1="60" x2="100" y2="125" 
-                          stroke="#0078D4" 
-                          stroke-width="4"/>
-                </svg>
-            </div>
-            
-            <div class="title">Multi Intelligence Cloud Platform</div>
-            <div class="subtitle">Secure Enterprise Sign-In</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Prominent sign-in button
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("🔷 Sign in with Microsoft", type="primary", use_container_width=True, key="signin_button"):
-                st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
-        
-        # Direct link below button
-        st.markdown(f"""
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="{auth_url}" style="color: #0078D4; font-size: 16px; text-decoration: none; font-weight: 500;">
-                Or click here to sign in →
-            </a>
-        </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
-        <div style="text-align: center; margin-top: 40px; padding: 20px; color: #999; font-size: 13px;">
-            <p style="margin: 5px 0;">✓ Supports work, school, and personal Microsoft accounts</p>
-            <p style="margin: 5px 0;">✓ Enterprise SSO • Secure • Reliable</p>
+        <div class="login-container">
+            <div class="logo">☁️</div>
+            <div class="title">CloudIDP</div>
+            <div class="subtitle">Multi-Cloud Infrastructure Intelligence Platform</div>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Use Streamlit's link_button - THIS IS THE KEY FIX!
+        st.link_button(
+            label="🔷 Sign in with Microsoft",
+            url=auth_url,
+            use_container_width=False
+        )
+        
+        st.markdown("""
+        <div style="text-align: center; margin-top: 30px;">
+            <p style="font-size: 12px; color: #999;">
+                Enterprise SSO Authentication<br>
+                Secure • Fast • Reliable<br>
+                Supports work, school, and personal Microsoft accounts
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Configuration info in expander
+        with st.expander("🔧 Configuration Info"):
+            st.markdown(f"""
+            **Current Configuration:**
+            - Tenant ID: `{tenant_id}`
+            - Redirect URI: `{redirect_uri}`
+            - Account types: Work, school, and personal Microsoft accounts
+            
+            **If sign-in fails:**
+            1. Ensure Azure AD app supports personal Microsoft accounts
+            2. Check that redirect URI matches exactly in Azure AD
+            3. Verify client secret is not expired
+            """)
         
         st.stop()
 
