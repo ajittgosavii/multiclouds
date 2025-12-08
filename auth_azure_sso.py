@@ -354,7 +354,7 @@ def render_login():
             st.rerun()
     
     else:
-        # Professional login page with actual cloud provider logos
+        # Professional login page with centered link
         from urllib.parse import quote
         
         # Build OAuth authorization URL
@@ -371,7 +371,7 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Clean professional login page with cloud provider logos
+        # Clean professional login page with bordered logo and centered link
         st.markdown(f"""
         <style>
         .login-container {{
@@ -385,21 +385,15 @@ def render_login():
         }}
         .logo-wrapper {{
             display: inline-block;
-            padding: 30px 40px;
+            padding: 20px;
             border: 2px solid #E1E8ED;
             border-radius: 12px;
             margin-bottom: 30px;
             background: #F7F9FA;
         }}
-        .logos-container {{
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 25px;
-        }}
-        .provider-logo {{
-            width: 70px;
-            height: 70px;
+        .logo {{
+            font-size: 72px;
+            line-height: 1;
         }}
         .title {{
             font-size: 36px;
@@ -435,50 +429,7 @@ def render_login():
         
         <div class="login-container">
             <div class="logo-wrapper">
-                <div class="logos-container">
-                    
-                    <!-- AWS Logo -->
-                    <svg class="provider-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <!-- AWS Background -->
-                        <rect width="100" height="100" fill="#FF9900" rx="8"/>
-                        <!-- AWS Smile/Arrow -->
-                        <path d="M25,65 Q35,70 50,70 Q65,70 75,65" 
-                              stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
-                        <circle cx="77" cy="62" r="3" fill="white"/>
-                        <!-- AWS Letters -->
-                        <text x="50" y="40" font-family="Arial, sans-serif" font-size="24" 
-                              font-weight="bold" fill="white" text-anchor="middle">AWS</text>
-                    </svg>
-                    
-                    <!-- Azure Logo -->
-                    <svg class="provider-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Azure Background -->
-                        <rect width="100" height="100" fill="#0078D4" rx="8"/>
-                        <!-- Azure "A" Symbol -->
-                        <path d="M35,70 L50,25 L65,70 L60,70 L57,60 L43,60 L40,70 Z M45,53 L55,53 L50,35 Z" 
-                              fill="white"/>
-                    </svg>
-                    
-                    <!-- GCP Logo -->
-                    <svg class="provider-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <!-- GCP Hexagon with Google Colors -->
-                        <defs>
-                            <linearGradient id="gcpGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#4285F4"/>
-                                <stop offset="33%" style="stop-color:#34A853"/>
-                                <stop offset="67%" style="stop-color:#FBBC04"/>
-                                <stop offset="100%" style="stop-color:#EA4335"/>
-                            </linearGradient>
-                        </defs>
-                        <!-- Hexagon Background -->
-                        <path d="M50,10 L85,30 L85,70 L50,90 L15,70 L15,30 Z" 
-                              fill="url(#gcpGrad)"/>
-                        <!-- GCP Text -->
-                        <text x="50" y="57" font-family="Arial, sans-serif" font-size="20" 
-                              font-weight="bold" fill="white" text-anchor="middle">GCP</text>
-                    </svg>
-                    
-                </div>
+                <div class="logo">☁️</div>
             </div>
             <div class="title">CloudIDP</div>
             <div class="subtitle">Multi-Cloud Infrastructure Intelligence Platform</div>
