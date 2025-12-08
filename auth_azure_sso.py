@@ -123,7 +123,7 @@ def exchange_code_for_token_simple(code: str, client_id: str, client_secret: str
         'code': code,
         'redirect_uri': redirect_uri,
         'grant_type': 'authorization_code',
-        'scope': 'openid profile email User.Read'
+        'scope': 'openid profile email https://graph.microsoft.com/User.Read'
     }
     
     try:
@@ -158,7 +158,7 @@ def exchange_code_for_token_debug(code: str, client_id: str, client_secret: str,
         'code': code,
         'redirect_uri': redirect_uri,
         'grant_type': 'authorization_code',
-        'scope': 'openid profile email User.Read'
+        'scope': 'openid profile email https://graph.microsoft.com/User.Read'
     }
     
     # Debug output
@@ -295,12 +295,13 @@ def render_login():
         st.write("**Authorization URL that will be used:**")
         from urllib.parse import quote
         authority = f"https://login.microsoftonline.com/{tenant_id}"
+        scopes = "openid profile email https://graph.microsoft.com/User.Read"
         test_url = (
             f"{authority}/oauth2/v2.0/authorize?"
             f"client_id={client_id}&"
             f"response_type=code&"
             f"redirect_uri={quote(redirect_uri, safe='')}&"
-            f"scope={quote('openid profile email User.Read', safe='')}&"
+            f"scope={scopes.replace(' ', '%20')}&"
             f"response_mode=query"
         )
         st.code(test_url, language=None)
@@ -418,13 +419,16 @@ def render_login():
             
             authority = f"https://login.microsoftonline.com/{tenant_id}"
             
-            # Explicitly construct URL with proper encoding
+            # Explicitly construct URL with proper OAuth scope encoding
+            # OAuth requires space-separated scopes, encoded as %20 not +
+            scopes = "openid profile email https://graph.microsoft.com/User.Read"
+            
             auth_url = (
                 f"{authority}/oauth2/v2.0/authorize?"
                 f"client_id={client_id}&"
                 f"response_type=code&"
                 f"redirect_uri={quote(redirect_uri, safe='')}&"
-                f"scope={quote('openid profile email User.Read', safe='')}&"
+                f"scope={scopes.replace(' ', '%20')}&"  # Space-separated, manually encode
                 f"response_mode=query"
             )
             
