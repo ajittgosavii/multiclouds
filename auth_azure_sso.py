@@ -372,9 +372,9 @@ def render_login():
         )
         
         # Clean professional login page with bordered logo and centered link
-        st.markdown("""
+        st.markdown(f"""
         <style>
-        .login-container {
+        .login-container {{
             max-width: 500px;
             margin: 100px auto;
             padding: 50px;
@@ -382,33 +382,33 @@ def render_login():
             border-radius: 16px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.08);
             text-align: center;
-        }
-        .logo-wrapper {
+        }}
+        .logo-wrapper {{
             display: inline-block;
             padding: 20px;
             border: 2px solid #E1E8ED;
             border-radius: 12px;
             margin-bottom: 30px;
             background: #F7F9FA;
-        }
-        .logo {
+        }}
+        .logo {{
             font-size: 72px;
             line-height: 1;
-        }
-        .title {
+        }}
+        .title {{
             font-size: 36px;
             font-weight: 700;
             color: #0078D4;
             margin-bottom: 12px;
             letter-spacing: -0.5px;
-        }
-        .subtitle {
+        }}
+        .subtitle {{
             font-size: 16px;
             color: #666;
             margin-bottom: 50px;
             font-weight: 400;
-        }
-        .signin-link {
+        }}
+        .signin-link {{
             display: inline-block;
             padding: 12px 32px;
             color: #0078D4;
@@ -419,12 +419,12 @@ def render_login():
             border-radius: 8px;
             transition: all 0.3s ease;
             background: white;
-        }
-        .signin-link:hover {
+        }}
+        .signin-link:hover {{
             background: #0078D4;
             color: white;
             text-decoration: none;
-        }
+        }}
         </style>
         
         <div class="login-container">
@@ -433,11 +433,11 @@ def render_login():
             </div>
             <div class="title">CloudIDP</div>
             <div class="subtitle">Multi-Cloud Infrastructure Intelligence Platform</div>
-            <a href="{}" class="signin-link">
+            <a href="{auth_url}" class="signin-link">
                 🔷 Sign in with Microsoft
             </a>
         </div>
-        """.format(auth_url), unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
         
         st.stop()
 
