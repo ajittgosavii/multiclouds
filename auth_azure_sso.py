@@ -109,6 +109,41 @@ class SimpleUserManager:
 # AZURE AD AUTHENTICATION - DEBUG VERSION
 # ============================================================================
 
+def exchange_code_for_token_simple(code: str, client_id: str, client_secret: str, 
+                                  redirect_uri: str, tenant_id: str = "common") -> Optional[Dict]:
+    """Exchange authorization code for access token"""
+    import requests
+    
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+    
+    token_data = {
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'code': code,
+        'redirect_uri': redirect_uri,
+        'grant_type': 'authorization_code',
+        'scope': 'openid profile email User.Read'
+    }
+    
+    try:
+        response = requests.post(token_url, data=token_data)
+        
+        if response.status_code != 200:
+            try:
+                error_data = response.json()
+                error_desc = error_data.get('error_description', '')
+                st.error(f"❌ Authentication failed: {error_desc}")
+            except:
+                st.error(f"❌ Authentication failed (Status: {response.status_code})")
+            return None
+        
+        return response.json()
+        
+    except Exception as e:
+        st.error(f"❌ Token exchange failed: {str(e)}")
+        return None
+
+
 def exchange_code_for_token_debug(code: str, client_id: str, client_secret: str, 
                                   redirect_uri: str, tenant_id: str = "common") -> Optional[Dict]:
     """Exchange authorization code for access token - WITH DEBUGGING"""
@@ -230,10 +265,10 @@ def get_user_info(access_token: str) -> Optional[Dict]:
 
 
 def render_login():
-    """Render login UI with debugging"""
+    """Render login UI"""
     
-    st.title("🔐 Sign In - DEBUG MODE")
-    st.caption("Showing detailed debug information")
+    st.title("🔐 Sign In")
+    st.caption("Secure authentication with Azure Active Directory")
     
     # Get Azure AD config
     try:
@@ -241,13 +276,6 @@ def render_login():
         client_secret = st.secrets.azure_ad.client_secret
         tenant_id = st.secrets.azure_ad.get('tenant_id', 'common')
         redirect_uri = st.secrets.azure_ad.get('redirect_uri', '')
-        
-        # Show config (partially masked)
-        with st.expander("📋 Azure AD Configuration"):
-            st.write(f"- Client ID: `{client_id[:10]}...{client_id[-10:]}`")
-            st.write(f"- Client Secret: `{'*' * 20}`")
-            st.write(f"- Tenant ID: `{tenant_id}`")
-            st.write(f"- Redirect URI: `{redirect_uri}`")
         
     except Exception as e:
         st.error(f"❌ Azure AD configuration missing: {str(e)}")
@@ -267,20 +295,11 @@ def render_login():
     query_params = st.query_params
     
     if 'code' in query_params:
-        st.info("🔄 Processing OAuth callback...")
-        
-        # Show query params
-        with st.expander("📋 Query Parameters"):
-            for key, value in query_params.items():
-                if key == 'code':
-                    st.write(f"- {key}: `{value[:20]}...` (length: {len(value)})")
-                else:
-                    st.write(f"- {key}: `{value}`")
-        
-        code = query_params['code']
-        
-        # Exchange code for token (with debugging)
-        token_response = exchange_code_for_token_debug(
+        with st.spinner("Completing sign in..."):
+            code = query_params['code']
+            
+            # Exchange code for token
+            token_response = exchange_code_for_token_simple(
             code=code,
             client_id=client_id,
             client_secret=client_secret,
@@ -289,27 +308,22 @@ def render_login():
         )
         
         if token_response and 'access_token' in token_response:
-            st.success("✅ Got access token!")
-            
             # Get user info
             user_info = get_user_info(token_response['access_token'])
             
             if user_info:
-                st.success(f"✅ Got user info: {user_info.get('name')}")
-                
                 # Auto-register or update user in Firebase
                 try:
                     from auth_database_firebase import get_database_manager
                     db_manager = get_database_manager()
                     
                     if db_manager:
-                        user = db_manager.create_or_update_user(
-                            user_id=user_info['id'],
-                            email=user_info['email'],
-                            name=user_info['name'],
-                            role='viewer',
-                            is_active=True
-                        )
+                        # Add default fields to user_info
+                        user_info['role'] = 'viewer'
+                        user_info['is_active'] = True
+                        
+                        # Call with user_info dict
+                        user = db_manager.create_or_update_user(user_info)
                         
                         # Store in session
                         st.session_state.authenticated = True
@@ -317,25 +331,24 @@ def render_login():
                         st.session_state.user_info = user
                         st.session_state.user_manager = SimpleUserManager()
                         
-                        st.success("✅ User registered in Firebase!")
-                        st.success("✅ Login successful! Redirecting...")
-                        
                         # Clear query params and rerun
                         st.query_params.clear()
                         st.rerun()
                 except Exception as e:
-                    st.error(f"Failed to register user in Firebase: {str(e)}")
-                    st.exception(e)
-        else:
-            st.error("❌ Token exchange failed. See details above.")
-            
-            if st.button("🔄 Try Again"):
-                st.query_params.clear()
-                st.rerun()
+                    st.error(f"Failed to register user: {str(e)}")
+                    if st.button("🔄 Try Again"):
+                        st.query_params.clear()
+                        st.rerun()
     
     else:
         # Show login button
-        st.info("Click below to sign in with Microsoft")
+        st.info("""
+        ℹ️ **Secure Authentication**
+        
+        Sign in with your Microsoft account to access CloudIDP.
+        
+        Enterprise Azure AD, Office 365, and personal Microsoft accounts supported.
+        """)
         
         if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary"):
             from urllib.parse import urlencode
@@ -351,10 +364,6 @@ def render_login():
             }
             
             auth_url = f"{authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
-            
-            # Show auth URL
-            with st.expander("🔗 Authorization URL"):
-                st.code(auth_url)
             
             # Redirect
             st.markdown(f"""
