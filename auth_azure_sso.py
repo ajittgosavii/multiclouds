@@ -319,36 +319,56 @@ def render_login():
                     db_manager = get_database_manager()
                     
                     if db_manager:
-                        # Check if user already exists in Firebase
+                        # Check if this is a new user or existing user
+                        user_id = user_info['id']
+                        
                         try:
-                            existing_user = db_manager.get_user(user_info['id'])
-                            if existing_user and isinstance(existing_user, dict):
-                                # User exists - preserve their existing role
-                                user_info['role'] = existing_user.get('role', 'viewer')
-                                user_info['is_active'] = existing_user.get('is_active', True)
-                            else:
-                                # New user - set default role
-                                user_info['role'] = 'viewer'
-                                user_info['is_active'] = True
+                            # Try to get existing user
+                            existing_user = db_manager.get_user(user_id)
+                            is_new_user = not (existing_user and isinstance(existing_user, dict))
                         except:
                             # If get_user fails, assume new user
+                            is_new_user = True
+                        
+                        if is_new_user:
+                            # New user - set default role and is_active
                             user_info['role'] = 'viewer'
                             user_info['is_active'] = True
+                            db_manager.create_or_update_user(user_info)
+                            # For new users, use the user_info we just created
+                            final_user_info = user_info
+                        else:
+                            # Existing user - DON'T set role (preserve Firebase role)
+                            # Only update name, email, last_login
+                            update_data = {
+                                'id': user_info['id'],
+                                'email': user_info['email'],
+                                'name': user_info.get('name', ''),
+                                'given_name': user_info.get('given_name', ''),
+                                'family_name': user_info.get('family_name', '')
+                            }
+                            db_manager.create_or_update_user(update_data)
+                            
+                            # IMPORTANT: Load user FROM Firebase to get their actual role
+                            try:
+                                final_user_info = db_manager.get_user(user_id)
+                                if not final_user_info:
+                                    final_user_info = user_info
+                            except:
+                                final_user_info = user_info
                         
-                        # Save user to Firebase (will update or create)
-                        db_manager.create_or_update_user(user_info)
-                        
-                        # Store user_info in session (use the dict we have, not Firebase return value)
+                        # Store the final user info in session
                         st.session_state.authenticated = True
-                        st.session_state.user_id = user_info['id']
-                        st.session_state.user_info = user_info  # Use the dict directly
+                        st.session_state.user_id = final_user_info['id']
+                        st.session_state.user_info = final_user_info
                         st.session_state.user_manager = SimpleUserManager()
                         
                         # Clear query params and rerun
                         st.query_params.clear()
                         st.rerun()
                 except Exception as e:
-                    st.error(f"Failed to register user: {str(e)}")
+                    st.error(f"❌ Failed to register user: {str(e)}")
+                    st.info("Please try logging in again or contact support.")
                     if st.button("🔄 Try Again"):
                         st.query_params.clear()
                         st.rerun()
@@ -360,8 +380,18 @@ def render_login():
         
         Sign in with your Microsoft account to access CloudIDP.
         
-        Enterprise Azure AD, Office 365, and personal Microsoft accounts supported.
+        Enterprise Azure AD and Office 365 accounts supported.
         """)
+        
+        # Show current configuration for debugging
+        with st.expander("🔍 Debug: View Current Configuration", expanded=False):
+            st.write("**Azure AD Configuration:**")
+            st.code(f"""
+Client ID: {client_id[:10]}...{client_id[-10:]}
+Tenant ID: {tenant_id}
+Redirect URI: {redirect_uri}
+Authority: https://login.microsoftonline.com/{tenant_id}
+            """)
         
         if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary"):
             from urllib.parse import urlencode
@@ -378,11 +408,24 @@ def render_login():
             
             auth_url = f"{authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
             
-            # Redirect
+            # Show the exact URL being used
+            st.info("🔍 **Debug Information:**")
+            st.write("Authorization URL being used:")
+            st.code(auth_url, language=None)
+            st.write("---")
+            st.write("**If the page doesn't redirect automatically:**")
+            st.write("1. Copy the URL above")
+            st.write("2. Open a new tab")
+            st.write("3. Paste and go to that URL")
+            st.write("4. Or click the link below:")
+            
+            # Provide a clickable link
+            st.markdown(f'<a href="{auth_url}" target="_self" style="font-size: 18px; color: #0066cc;">👉 Click here to login</a>', unsafe_allow_html=True)
+            
+            # Also try meta refresh redirect
             st.markdown(f"""
-            <meta http-equiv="refresh" content="0;url={auth_url}">
-            <p>Redirecting to Microsoft login...</p>
-            <p>If you are not redirected, <a href="{auth_url}" target="_self">click here</a>.</p>
+            <meta http-equiv="refresh" content="3;url={auth_url}">
+            <p><em>Attempting to redirect in 3 seconds...</em></p>
             """, unsafe_allow_html=True)
             
             st.stop()
