@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from core_account_manager import get_account_manager, get_account_names
+from auth_azure_sso import require_permission
 import json
 
 class AdvancedOperationsModule:
@@ -750,7 +751,6 @@ Experiment is now live. You'll receive daily reports.
             if trigger_condition and remediation_action:
                 with st.spinner("Claude is generating automation rule..."):
                     import time
-from auth_azure_sso import require_permission
                     time.sleep(2)
                     
                     st.success("✅ Auto-remediation rule generated!")
