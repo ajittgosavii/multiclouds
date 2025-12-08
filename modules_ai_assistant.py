@@ -4,7 +4,7 @@ Provides AI-powered assistance for AWS operations, architecture, and optimizatio
 """
 
 import streamlit as st
-from anthropic_helper import get_anthropic_helper
+from anthropic_helper_aws import get_aws_anthropic_helper as get_anthropic_helper
 from typing import List, Dict
 import json
 from auth_azure_sso import require_permission

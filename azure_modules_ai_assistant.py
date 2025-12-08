@@ -4,7 +4,7 @@ Provides AI-powered assistance for Azure operations, architecture, and optimizat
 """
 
 import streamlit as st
-from anthropic_helper import get_anthropic_helper
+from anthropic_helper_azure import get_azure_anthropic_helper as get_anthropic_helper
 from typing import List, Dict
 import json
 from auth_azure_sso import require_permission
