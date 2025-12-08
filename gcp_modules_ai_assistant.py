@@ -812,3 +812,8 @@ Include specific gcloud commands and resource paths.
             - Cloud DNS Failover Configuration
             - VM Patching with OS Patch Management
             """)
+
+# Module-level render function
+def render():
+    """Module-level render function"""
+    GCPAIAssistantModule.render()
