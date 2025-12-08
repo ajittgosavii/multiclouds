@@ -293,16 +293,16 @@ def render_login():
         # Show what the authorization URL will look like
         st.write("---")
         st.write("**Authorization URL that will be used:**")
-        from urllib.parse import urlencode
+        from urllib.parse import quote
         authority = f"https://login.microsoftonline.com/{tenant_id}"
-        auth_params = {
-            'client_id': client_id,
-            'response_type': 'code',
-            'redirect_uri': redirect_uri,
-            'scope': 'openid profile email User.Read',
-            'response_mode': 'query'
-        }
-        test_url = f"{authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
+        test_url = (
+            f"{authority}/oauth2/v2.0/authorize?"
+            f"client_id={client_id}&"
+            f"response_type=code&"
+            f"redirect_uri={quote(redirect_uri, safe='')}&"
+            f"scope={quote('openid profile email User.Read', safe='')}&"
+            f"response_mode=query"
+        )
         st.code(test_url, language=None)
         
         st.info("⬆️ **Copy the URL above and test it in a new browser tab!**")
@@ -414,38 +414,44 @@ def render_login():
         """)
         
         if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary"):
-            from urllib.parse import urlencode
+            from urllib.parse import urlencode, quote
             
             authority = f"https://login.microsoftonline.com/{tenant_id}"
             
-            auth_params = {
-                'client_id': client_id,
-                'response_type': 'code',
-                'redirect_uri': redirect_uri,
-                'scope': 'openid profile email User.Read',
-                'response_mode': 'query'
-            }
-            
-            auth_url = f"{authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
+            # Explicitly construct URL with proper encoding
+            auth_url = (
+                f"{authority}/oauth2/v2.0/authorize?"
+                f"client_id={client_id}&"
+                f"response_type=code&"
+                f"redirect_uri={quote(redirect_uri, safe='')}&"
+                f"scope={quote('openid profile email User.Read', safe='')}&"
+                f"response_mode=query"
+            )
             
             # Show debug information
             st.success("✅ **Login button clicked!**")
-            st.write("**Redirecting to this URL:**")
+            st.write("**Full Authorization URL:**")
             st.code(auth_url, language=None)
             
-            st.warning("⚠️ **If redirect doesn't work:**")
-            st.write("1. Copy the URL above")
-            st.write("2. Open it in a new browser tab")
-            st.write("3. Check if Microsoft login page loads")
+            st.warning("⚠️ **IMPORTANT: Click the link below (don't wait for auto-redirect)**")
             
-            # Provide direct link
-            st.markdown(f'**Direct link:** [Click here to login]({auth_url})', unsafe_allow_html=True)
-            
-            # Also try auto redirect
+            # Provide direct clickable link - this is the most reliable method
             st.markdown(f"""
-            <meta http-equiv="refresh" content="2;url={auth_url}">
-            <p><em>Auto-redirecting in 2 seconds...</em></p>
+            <a href="{auth_url}" target="_self" style="
+                display: inline-block;
+                background-color: #0078d4;
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 16px;
+                margin: 10px 0;">
+                🔷 Click Here to Sign In
+            </a>
             """, unsafe_allow_html=True)
+            
+            st.info("👆 **Click the blue button above to login**")
             
             st.stop()
 
