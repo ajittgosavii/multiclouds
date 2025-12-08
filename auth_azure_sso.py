@@ -319,11 +319,23 @@ def render_login():
                     db_manager = get_database_manager()
                     
                     if db_manager:
-                        # Add default fields to user_info
-                        user_info['role'] = 'viewer'
-                        user_info['is_active'] = True
+                        # Check if user already exists in Firebase
+                        try:
+                            existing_user = db_manager.get_user(user_info['id'])
+                            if existing_user and isinstance(existing_user, dict):
+                                # User exists - preserve their existing role
+                                user_info['role'] = existing_user.get('role', 'viewer')
+                                user_info['is_active'] = existing_user.get('is_active', True)
+                            else:
+                                # New user - set default role
+                                user_info['role'] = 'viewer'
+                                user_info['is_active'] = True
+                        except:
+                            # If get_user fails, assume new user
+                            user_info['role'] = 'viewer'
+                            user_info['is_active'] = True
                         
-                        # Save user to Firebase
+                        # Save user to Firebase (will update or create)
                         db_manager.create_or_update_user(user_info)
                         
                         # Store user_info in session (use the dict we have, not Firebase return value)
