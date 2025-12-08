@@ -1189,7 +1189,7 @@ class DesignPlanningModule:
                 
                 try:
                     import anthropic
-from auth_azure_sso import require_permission
+                    from auth_azure_sso import require_permission
                     
                     prompt = f"""You are an AWS Well-Architected Framework expert. Answer this architecture question with specific, actionable recommendations:
 
