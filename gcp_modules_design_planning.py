@@ -16,11 +16,11 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 from gcp_theme import GCPTheme
+from auth_azure_sso import require_permission
 
 # Try to import AI capabilities
 try:
     from anthropic_helper import get_anthropic_client
-from auth_azure_sso import require_permission
     AI_AVAILABLE = True
 except:
     AI_AVAILABLE = False
