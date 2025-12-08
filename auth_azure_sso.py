@@ -354,7 +354,7 @@ def render_login():
             st.rerun()
     
     else:
-        # Professional login page with centered link
+        # Professional login page with modern design
         from urllib.parse import quote
         
         # Build OAuth authorization URL
@@ -371,71 +371,174 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Clean professional login page with bordered logo and centered link
+        # Modern professional login page with gradient and glass-morphism
         st.markdown(f"""
         <style>
+        /* Full page gradient background */
+        .stApp {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+        }}
+        
+        /* Animated background particles */
+        @keyframes float {{
+            0%, 100% {{ transform: translateY(0px); }}
+            50% {{ transform: translateY(-20px); }}
+        }}
+        
         .login-container {{
-            max-width: 500px;
-            margin: 100px auto;
-            padding: 50px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            max-width: 520px;
+            margin: 80px auto;
+            padding: 60px 50px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             text-align: center;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.3);
         }}
-        .logo-wrapper {{
+        
+        /* Decorative gradient top bar */
+        .login-container::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF9900, #0078D4, #4285F4);
+            border-radius: 24px 24px 0 0;
+        }}
+        
+        .logos-wrapper {{
             display: inline-block;
-            padding: 20px;
-            border: 2px solid #E1E8ED;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            background: #F7F9FA;
+            padding: 25px 35px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 16px;
+            margin-bottom: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.5);
         }}
-        .logo {{
-            font-size: 72px;
-            line-height: 1;
+        
+        .logos-container {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
         }}
+        
+        .provider-logo {{
+            width: 65px;
+            height: 65px;
+            transition: transform 0.3s ease;
+        }}
+        
+        .provider-logo:hover {{
+            transform: scale(1.1);
+        }}
+        
         .title {{
-            font-size: 36px;
-            font-weight: 700;
-            color: #0078D4;
-            margin-bottom: 12px;
-            letter-spacing: -0.5px;
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
         }}
+        
         .subtitle {{
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 50px;
-            font-weight: 400;
+            font-size: 17px;
+            color: #5a6c7d;
+            margin-bottom: 45px;
+            font-weight: 500;
+            line-height: 1.6;
         }}
+        
         .signin-link {{
             display: inline-block;
-            padding: 12px 32px;
-            color: #0078D4;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-            border: 2px solid #0078D4;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            background: white;
-        }}
-        .signin-link:hover {{
-            background: #0078D4;
+            padding: 16px 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;
+            font-size: 17px;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            border: none;
+        }}
+        
+        .signin-link:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+            text-decoration: none;
+            color: white;
+        }}
+        
+        .security-badge {{
+            margin-top: 35px;
+            padding: 12px 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #667eea;
+            font-weight: 500;
         }}
         </style>
         
         <div class="login-container">
-            <div class="logo-wrapper">
-                <div class="logo">☁️</div>
+            <div class="logos-wrapper">
+                <div class="logos-container">
+                    
+                    <!-- AWS Logo -->
+                    <svg class="provider-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="#FF9900" rx="10"/>
+                        <text x="50" y="42" font-family="Arial, sans-serif" font-size="26" 
+                              font-weight="bold" fill="white" text-anchor="middle">AWS</text>
+                        <path d="M25,65 Q35,72 50,72 Q65,72 75,65" 
+                              stroke="white" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                        <circle cx="77" cy="62" r="3.5" fill="white"/>
+                    </svg>
+                    
+                    <!-- Azure Logo -->
+                    <svg class="provider-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="#0078D4" rx="10"/>
+                        <path d="M32,72 L50,22 L68,72 L62,72 L58,60 L42,60 L38,72 Z M44,52 L56,52 L50,32 Z" 
+                              fill="white"/>
+                    </svg>
+                    
+                    <!-- GCP Logo -->
+                    <svg class="provider-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="gcpGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#4285F4"/>
+                                <stop offset="33%" style="stop-color:#34A853"/>
+                                <stop offset="67%" style="stop-color:#FBBC04"/>
+                                <stop offset="100%" style="stop-color:#EA4335"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M50,8 L88,28 L88,72 L50,92 L12,72 L12,28 Z" 
+                              fill="url(#gcpGrad)"/>
+                        <text x="50" y="60" font-family="Arial, sans-serif" font-size="22" 
+                              font-weight="bold" fill="white" text-anchor="middle">GCP</text>
+                    </svg>
+                    
+                </div>
             </div>
+            
             <div class="title">CloudIDP</div>
             <div class="subtitle">Multi-Cloud Infrastructure Intelligence Platform</div>
+            
             <a href="{auth_url}" class="signin-link">
                 🔷 Sign in with Microsoft
             </a>
+            
+            <div class="security-badge">
+                🔒 Enterprise SSO Authentication • Secure & Reliable
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
