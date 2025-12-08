@@ -1,6 +1,6 @@
 """
-Azure AD SSO Authentication with PKCE and Role-Based Access Control
-Complete authentication module with Edge/Incognito compatibility
+Azure AD SSO Authentication - Streamlit Compatible
+Uses query parameter state management to work with Streamlit redirects
 """
 
 import streamlit as st
@@ -8,7 +8,6 @@ from typing import Optional, Dict, List, Callable
 from functools import wraps
 import secrets
 import hashlib
-import base64
 
 
 # ============================================================================
@@ -18,11 +17,10 @@ import base64
 class RoleManager:
     """Manages role-based permissions"""
     
-    # Define all roles and their permissions
     ROLES = {
         'admin': {
             'description': 'Full system access',
-            'permissions': ['*']  # Wildcard = all permissions
+            'permissions': ['*']
         },
         'architect': {
             'description': 'Design and provision infrastructure',
@@ -78,11 +76,9 @@ class RoleManager:
         
         role_permissions = RoleManager.ROLES[user_role]['permissions']
         
-        # Check for wildcard (admin)
         if '*' in role_permissions:
             return True
         
-        # Check for specific permission
         return required_permission in role_permissions
     
     @staticmethod
@@ -93,7 +89,6 @@ class RoleManager:
         
         permissions = RoleManager.ROLES[user_role]['permissions']
         
-        # If wildcard, return all possible permissions
         if '*' in permissions:
             all_permissions = set()
             for role_data in RoleManager.ROLES.values():
@@ -105,18 +100,10 @@ class RoleManager:
 
 
 def require_permission(permission: str) -> Callable:
-    """
-    Decorator to require specific permission for a function
-    
-    Usage:
-        @require_permission('view_dashboard')
-        def render():
-            st.write("Dashboard content")
-    """
+    """Decorator to require specific permission for a function"""
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Get current user from session
             user_manager = st.session_state.get('user_manager')
             if not user_manager:
                 st.error("❌ Authentication required")
@@ -131,7 +118,6 @@ def require_permission(permission: str) -> Callable:
             
             user_role = current_user.get('role', 'viewer')
             
-            # Check permission
             if not RoleManager.has_permission(user_role, permission):
                 st.error("❌ You don't have permission to access this feature")
                 st.info(f"""
@@ -141,7 +127,6 @@ def require_permission(permission: str) -> Callable:
                 Contact your administrator to request access.
                 """)
                 
-                # Log permission denial
                 try:
                     from auth_database_firebase import get_database_manager
                     db_manager = get_database_manager()
@@ -160,7 +145,6 @@ def require_permission(permission: str) -> Callable:
                 
                 return
             
-            # Permission granted - execute function
             return func(*args, **kwargs)
         
         return wrapper
@@ -168,113 +152,62 @@ def require_permission(permission: str) -> Callable:
 
 
 # ============================================================================
-# AZURE AD AUTHENTICATION WITH PKCE
+# SIMPLE USER MANAGER
 # ============================================================================
 
-class AzureAuthManager:
-    """Manages Azure AD authentication with PKCE (no cookies needed!)"""
+class SimpleUserManager:
+    """Simple user manager for session"""
     
-    def __init__(self, client_id: str, client_secret: str, tenant_id: str = "common"):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.tenant_id = tenant_id
-        self.authority = f"https://login.microsoftonline.com/{tenant_id}"
-        
-        # Get redirect URI from secrets or use default
-        self.redirect_uri = st.secrets.get("azure_ad", {}).get(
-            "redirect_uri", 
-            "https://hyperscaler.streamlit.app"
-        )
+    def __init__(self):
+        pass
     
-    def generate_auth_url(self) -> str:
-        """Generate Azure AD authorization URL with PKCE"""
-        
-        # Generate state (for CSRF protection)
-        state = secrets.token_urlsafe(32)
-        
-        # Generate PKCE code verifier and challenge
-        # This eliminates the need for state cookies!
-        code_verifier = secrets.token_urlsafe(64)
-        code_challenge = base64.urlsafe_b64encode(
-            hashlib.sha256(code_verifier.encode()).digest()
-        ).decode().rstrip('=')
-        
-        # Store in session state (not cookies!)
-        st.session_state.oauth_state = state
-        st.session_state.code_verifier = code_verifier
-        
-        # Build authorization URL
-        auth_params = {
-            'client_id': self.client_id,
-            'response_type': 'code',
-            'redirect_uri': self.redirect_uri,
-            'scope': 'openid profile email User.Read',
-            'state': state,
-            'code_challenge': code_challenge,
-            'code_challenge_method': 'S256',
-            'response_mode': 'query'
-        }
-        
-        from urllib.parse import urlencode
-        auth_url = f"{self.authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
-        
-        return auth_url
+    def get_current_user(self):
+        """Get current user from session"""
+        return st.session_state.get('user_info')
     
-    def handle_callback(self, code: str, state: str) -> Optional[Dict]:
-        """Handle OAuth callback without relying on cookies"""
-        
-        # Verify state (CSRF protection)
-        if state != st.session_state.get('oauth_state'):
-            st.error("❌ Invalid state parameter - possible CSRF attack")
-            return None
-        
-        # Get code verifier from session
-        code_verifier = st.session_state.get('code_verifier')
-        if not code_verifier:
-            st.error("❌ Missing code verifier")
-            return None
-        
-        # Exchange code for token
-        import requests
-        
-        token_url = f"{self.authority}/oauth2/v2.0/token"
-        token_data = {
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
-            'code': code,
-            'redirect_uri': self.redirect_uri,
-            'grant_type': 'authorization_code',
-            'code_verifier': code_verifier  # PKCE
-        }
-        
-        try:
-            response = requests.post(token_url, data=token_data)
-            response.raise_for_status()
-            token_response = response.json()
-            
-            # Get user info
-            access_token = token_response['access_token']
-            user_info = self._get_user_info(access_token)
-            
-            # Clean up session state
-            del st.session_state.oauth_state
-            del st.session_state.code_verifier
-            
-            return user_info
-            
-        except Exception as e:
-            st.error(f"❌ Token exchange failed: {str(e)}")
-            return None
+    def is_authenticated(self):
+        """Check if user is authenticated"""
+        return st.session_state.get('authenticated', False)
+
+
+# ============================================================================
+# AZURE AD AUTHENTICATION - SIMPLE VERSION
+# ============================================================================
+
+def exchange_code_for_token(code: str, client_id: str, client_secret: str, 
+                           redirect_uri: str, tenant_id: str = "common") -> Optional[Dict]:
+    """Exchange authorization code for access token"""
+    import requests
     
-    def _get_user_info(self, access_token: str) -> Dict:
-        """Get user information from Microsoft Graph API"""
-        import requests
-        
-        headers = {
-            'Authorization': f'Bearer {access_token}',
-            'Accept': 'application/json'
-        }
-        
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+    
+    token_data = {
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'code': code,
+        'redirect_uri': redirect_uri,
+        'grant_type': 'authorization_code'
+    }
+    
+    try:
+        response = requests.post(token_url, data=token_data)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"❌ Token exchange failed: {str(e)}")
+        return None
+
+
+def get_user_info(access_token: str) -> Optional[Dict]:
+    """Get user information from Microsoft Graph"""
+    import requests
+    
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': 'application/json'
+    }
+    
+    try:
         response = requests.get(
             'https://graph.microsoft.com/v1.0/me',
             headers=headers
@@ -290,97 +223,124 @@ class AzureAuthManager:
             'given_name': user_data.get('givenName'),
             'family_name': user_data.get('surname')
         }
+    except Exception as e:
+        st.error(f"❌ Failed to get user info: {str(e)}")
+        return None
 
 
-# ============================================================================
-# LOGIN UI
-# ============================================================================
-
-def render_login_with_pkce():
-    """Render login UI with PKCE-based OAuth (works in all browsers!)"""
+def render_login():
+    """Render login UI - Simple version that works with Streamlit"""
     
     st.title("🔐 Sign In")
     st.caption("Secure authentication with Azure Active Directory")
     
+    # Get Azure AD config
+    try:
+        client_id = st.secrets.azure_ad.client_id
+        client_secret = st.secrets.azure_ad.client_secret
+        tenant_id = st.secrets.azure_ad.get('tenant_id', 'common')
+        redirect_uri = st.secrets.azure_ad.get('redirect_uri', st.secrets.azure_ad.get('redirect_url', ''))
+    except Exception as e:
+        st.error(f"❌ Azure AD configuration missing: {str(e)}")
+        st.info("""
+        Please add Azure AD secrets to Streamlit Cloud:
+        
+        ```toml
+        [azure_ad]
+        client_id = "your-client-id"
+        client_secret = "your-client-secret"
+        tenant_id = "common"
+        redirect_uri = "https://your-app.streamlit.app"
+        ```
+        """)
+        return
+    
     # Check for OAuth callback
     query_params = st.query_params
     
-    if 'code' in query_params and 'state' in query_params:
+    if 'code' in query_params:
         # Handle callback
         with st.spinner("Completing sign in..."):
-            auth_manager = AzureAuthManager(
-                client_id=st.secrets.azure_ad.client_id,
-                client_secret=st.secrets.azure_ad.client_secret,
-                tenant_id=st.secrets.azure_ad.get('tenant_id', 'common')
+            code = query_params['code']
+            
+            # Exchange code for token
+            token_response = exchange_code_for_token(
+                code=code,
+                client_id=client_id,
+                client_secret=client_secret,
+                redirect_uri=redirect_uri,
+                tenant_id=tenant_id
             )
             
-            user_info = auth_manager.handle_callback(
-                code=query_params['code'],
-                state=query_params['state']
-            )
-            
-            if user_info:
-                # Auto-register or get user from Firebase
-                from auth_database_firebase import get_database_manager
-                db_manager = get_database_manager()
+            if token_response and 'access_token' in token_response:
+                # Get user info
+                user_info = get_user_info(token_response['access_token'])
                 
-                if db_manager:
-                    user = db_manager.create_or_update_user(
-                        user_id=user_info['id'],
-                        email=user_info['email'],
-                        name=user_info['name'],
-                        role='viewer',  # Default role
-                        is_active=True
-                    )
-                    
-                    # Store in session
-                    st.session_state.authenticated = True
-                    st.session_state.user_id = user_info['id']
-                    st.session_state.user_info = user
-                    
-                    # Clear query params and rerun
-                    st.query_params.clear()
-                    st.rerun()
+                if user_info:
+                    # Auto-register or update user in Firebase
+                    try:
+                        from auth_database_firebase import get_database_manager
+                        db_manager = get_database_manager()
+                        
+                        if db_manager:
+                            user = db_manager.create_or_update_user(
+                                user_id=user_info['id'],
+                                email=user_info['email'],
+                                name=user_info['name'],
+                                role='viewer',
+                                is_active=True
+                            )
+                            
+                            # Store in session
+                            st.session_state.authenticated = True
+                            st.session_state.user_id = user_info['id']
+                            st.session_state.user_info = user
+                            st.session_state.user_manager = SimpleUserManager()
+                            
+                            # Clear query params and rerun
+                            st.query_params.clear()
+                            st.success("✅ Login successful!")
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"Failed to register user: {str(e)}")
+                        st.stop()
     
     else:
         # Show login button
         st.info("""
-        ℹ️ **Browser Compatibility**
+        ℹ️ **Secure Authentication**
         
-        This authentication works in:
-        ✅ Chrome (normal and incognito)
-        ✅ Edge (normal and InPrivate)
-        ✅ Firefox (normal and private)
-        ✅ All modern browsers!
+        Sign in with your Microsoft account to access CloudIDP.
         
-        No cookie configuration needed!
+        - Enterprise Azure AD accounts
+        - Personal Microsoft accounts
+        - Office 365 accounts
         """)
         
         if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary"):
-            # Generate auth URL with PKCE
-            auth_manager = AzureAuthManager(
-                client_id=st.secrets.azure_ad.client_id,
-                client_secret=st.secrets.azure_ad.client_secret,
-                tenant_id=st.secrets.azure_ad.get('tenant_id', 'common')
-            )
+            # Build authorization URL
+            from urllib.parse import urlencode
             
-            auth_url = auth_manager.generate_auth_url()
+            authority = f"https://login.microsoftonline.com/{tenant_id}"
             
-            # Redirect using JavaScript (works in all modes)
+            auth_params = {
+                'client_id': client_id,
+                'response_type': 'code',
+                'redirect_uri': redirect_uri,
+                'scope': 'openid profile email User.Read',
+                'response_mode': 'query'
+            }
+            
+            auth_url = f"{authority}/oauth2/v2.0/authorize?" + urlencode(auth_params)
+            
+            # Redirect using meta refresh (most compatible)
             st.markdown(f"""
-            <meta http-equiv="refresh" content="0; url={auth_url}">
-            <script>
-                window.location.href = "{auth_url}";
-            </script>
+            <meta http-equiv="refresh" content="0;url={auth_url}">
+            <p>Redirecting to Microsoft login...</p>
+            <p>If you are not redirected, <a href="{auth_url}" target="_self">click here</a>.</p>
             """, unsafe_allow_html=True)
             
-            st.info("Redirecting to Microsoft login...")
-
-
-# Backward compatibility
-def render_login():
-    """Alias for backward compatibility"""
-    render_login_with_pkce()
+            st.stop()
 
 
 # ============================================================================
@@ -390,7 +350,6 @@ def render_login():
 __all__ = [
     'RoleManager',
     'require_permission',
-    'AzureAuthManager',
-    'render_login',
-    'render_login_with_pkce'
+    'SimpleUserManager',
+    'render_login'
 ]
