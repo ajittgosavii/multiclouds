@@ -354,8 +354,9 @@ def render_login():
             st.rerun()
     
     else:
-        # Professional login page with light blue gradient and emojis
+        # Bulletproof auto-redirect using Streamlit components
         from urllib.parse import quote
+        import streamlit.components.v1 as components
         
         # Build OAuth authorization URL
         authority = f"https://login.microsoftonline.com/{tenant_id}"
@@ -371,88 +372,89 @@ def render_login():
             f"prompt=select_account"
         )
         
-        # Modern professional login with light blue gradient
+        # Apply light blue gradient background
         st.markdown("""
         <style>
         .stApp {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
             background-attachment: fixed !important;
         }
-        
-        .main-container {
-            max-width: 520px;
-            margin: 80px auto;
-            padding: 60px 50px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        
-        .cloud-emojis {
-            font-size: 65px;
-            margin-bottom: 35px;
-            letter-spacing: 15px;
-        }
-        
-        .main-title {
-            font-size: 42px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 15px;
-            letter-spacing: -1px;
-        }
-        
-        .main-subtitle {
-            font-size: 17px;
-            color: #5a6c7d;
-            margin-bottom: 45px;
-            font-weight: 500;
-            line-height: 1.6;
-        }
-        
-        .security-info {
-            margin-top: 35px;
-            padding: 12px 20px;
-            background: rgba(79, 172, 254, 0.1);
-            border-radius: 8px;
-            font-size: 13px;
-            color: #4facfe;
-            font-weight: 500;
-        }
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
-        <div class="main-container">
-            <div class="cloud-emojis">
-                🟧 🔷 🌈
+        # Use components.html for reliable redirect
+        redirect_script = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Redirecting...</title>
+            <style>
+                body {{
+                    margin: 0;
+                    padding: 0;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    background: transparent;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100px;
+                }}
+                .container {{
+                    text-align: center;
+                    padding: 20px;
+                }}
+                .spinner {{
+                    font-size: 36px;
+                    animation: spin 1s linear infinite;
+                }}
+                @keyframes spin {{
+                    from {{ transform: rotate(0deg); }}
+                    to {{ transform: rotate(360deg); }}
+                }}
+                .text {{
+                    margin-top: 15px;
+                    color: #0078D4;
+                    font-size: 16px;
+                    font-weight: 500;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="spinner">🔄</div>
+                <div class="text">Redirecting to Microsoft...</div>
             </div>
-            <div class="main-title">CloudIDP</div>
-            <div class="main-subtitle">Multi-Cloud Infrastructure Intelligence Platform</div>
-        </div>
-        """, unsafe_allow_html=True)
+            <script>
+                // Immediate redirect
+                window.top.location.href = "{auth_url}";
+            </script>
+        </body>
+        </html>
+        """
         
-        # Centered sign-in button
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.link_button(
-                label="🔷 Sign in with Microsoft",
-                url=auth_url,
-                use_container_width=True,
-                type="primary"
-            )
+        # Show a clean message
+        st.title("🔐 CloudIDP Sign In")
+        st.info("🔄 Redirecting you to Microsoft login...")
         
-        st.markdown("""
-        <div class="main-container" style="margin-top: 20px; padding: 15px;">
-            <div class="security-info">
-                🔒 Enterprise SSO Authentication • Secure & Reliable
-            </div>
+        # Execute redirect using Streamlit component
+        components.html(redirect_script, height=100)
+        
+        # Fallback link (in case component doesn't execute)
+        st.markdown(f"""
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{auth_url}" style="
+                display: inline-block;
+                padding: 12px 32px;
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+            ">
+                Click here if not redirected
+            </a>
         </div>
         """, unsafe_allow_html=True)
         
