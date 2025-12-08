@@ -10,11 +10,14 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureDevOpsPipelinesModule:
     """AI-Enhanced Azure DevOps CI/CD Intelligence"""
     
     @staticmethod
+    @require_permission('deploy_applications')
+
     def render():
         """Render Azure DevOps Pipelines Intelligence Center"""
         

@@ -6,11 +6,14 @@ API Management and App Configuration
 import streamlit as st
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureAPIManagementModule:
     """Azure API Management module"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Render Azure API Management"""
         

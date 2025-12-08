@@ -10,11 +10,14 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureNetworkInfrastructure:
     """Enterprise Azure Network Infrastructure Management"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Main render function"""
         

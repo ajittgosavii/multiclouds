@@ -8,11 +8,14 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import json
+from auth_azure_sso import require_permission
 
 class AzureUnifiedCICDModule:
     """Unified Azure CI/CD Module with all 5 phases"""
     
     @staticmethod
+    @require_permission('deploy_applications')
+
     def render():
         """Main render method"""
         

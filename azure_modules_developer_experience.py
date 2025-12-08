@@ -11,6 +11,8 @@ class AzureDevExModule:
     """Azure Developer Experience - Practical Coding Helper"""
     
     @staticmethod
+    @require_permission('use_devex')
+
     def render():
         """Render Azure DevEx module"""
         
@@ -779,6 +781,7 @@ Or in Python:
 ```python
 from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential
+from auth_azure_sso import require_permission
 
 credential = DefaultAzureCredential()
 blob_service = BlobServiceClient(

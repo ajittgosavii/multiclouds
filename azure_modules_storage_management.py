@@ -6,11 +6,14 @@ Manage Blob Storage, Files, and storage accounts
 import streamlit as st
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureStorageManagementModule:
     """Azure Storage Management module"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Render Azure Storage Management"""
         

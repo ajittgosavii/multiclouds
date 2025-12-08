@@ -19,11 +19,14 @@ from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 import json
 import uuid
+from auth_azure_sso import require_permission
 
 class AzureFinOpsModule:
     """Azure Enterprise FinOps - AI-Powered Cost Management"""
     
     @staticmethod
+    @require_permission('view_costs')
+
     def render():
         """Render Azure FinOps module"""
         

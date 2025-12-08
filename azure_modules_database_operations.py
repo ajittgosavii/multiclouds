@@ -6,11 +6,14 @@ Manage Azure SQL, Cosmos DB, and databases
 import streamlit as st
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureDatabaseOperationsModule:
     """Azure Database Operations module"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Render Azure Database Operations"""
         

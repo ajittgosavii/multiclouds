@@ -10,11 +10,14 @@ from datetime import datetime, timedelta
 from typing import Dict, List
 import json
 import uuid
+from auth_azure_sso import require_permission
 
 class AKSManagementModule:
     """AI-Enhanced AKS Operations Intelligence Center"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Render AKS Operations Intelligence Center"""
         

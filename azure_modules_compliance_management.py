@@ -6,11 +6,14 @@ Compliance reporting and management
 import streamlit as st
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureComplianceManagementModule:
     """Azure Compliance Management module"""
     
     @staticmethod
+    @require_permission('view_security')
+
     def render():
         """Render Azure Compliance Management"""
         

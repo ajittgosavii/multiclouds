@@ -10,11 +10,14 @@ import numpy as np
 from datetime import datetime, timedelta
 import json
 import uuid
+from auth_azure_sso import require_permission
 
 class AzureAdvancedOperationsModule:
     """Advanced Azure Operations with comprehensive ML Ops"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Main render method"""
         

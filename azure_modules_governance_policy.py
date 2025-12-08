@@ -6,11 +6,14 @@ Azure Policy and Management Groups
 import streamlit as st
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureGovernanceAndPolicyModule:
     """Azure Governance & Policy module"""
     
     @staticmethod
+    @require_permission('manage_policies')
+
     def render():
         """Render Azure Governance & Policy"""
         

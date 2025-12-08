@@ -20,6 +20,7 @@ from azure_theme import AzureTheme
 # Try to import AI capabilities
 try:
     from anthropic_helper import get_anthropic_client
+from auth_azure_sso import require_permission
     AI_AVAILABLE = True
 except:
     AI_AVAILABLE = False
@@ -30,6 +31,8 @@ class AzureDesignPlanningModule:
     """Azure Well-Architected Framework Aligned Design & Planning"""
     
     @staticmethod
+    @require_permission('design_architecture')
+
     def render():
         """Main render function"""
         

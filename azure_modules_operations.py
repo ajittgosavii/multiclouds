@@ -8,11 +8,14 @@ import pandas as pd
 from datetime import datetime, timedelta
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureOperationsModule:
     """AI-Enhanced Azure Operations"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Main render method"""
         

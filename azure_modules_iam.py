@@ -10,11 +10,14 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureADModule:
     """AI-Enhanced Azure AD / Entra ID Intelligence"""
     
     @staticmethod
+    @require_permission('manage_policies')
+
     def render():
         """Render Azure AD Intelligence Center"""
         

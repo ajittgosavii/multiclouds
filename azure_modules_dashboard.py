@@ -6,11 +6,14 @@ Main overview for Azure subscriptions and resources
 import streamlit as st
 from azure_theme import AzureTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class AzureDashboardModule:
     """Azure Dashboard module"""
     
     @staticmethod
+    @require_permission('view_dashboard')
+
     def render():
         """Render Azure dashboard"""
         
