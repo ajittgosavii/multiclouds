@@ -1,16 +1,178 @@
 """
-Azure AD SSO Authentication with Cookie Fix for Edge/Incognito
-Handles SameSite cookie attributes for cross-browser compatibility
+Azure AD SSO Authentication with PKCE and Role-Based Access Control
+Complete authentication module with Edge/Incognito compatibility
 """
 
 import streamlit as st
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Callable
+from functools import wraps
 import secrets
 import hashlib
 import base64
 
+
+# ============================================================================
+# ROLE-BASED ACCESS CONTROL
+# ============================================================================
+
+class RoleManager:
+    """Manages role-based permissions"""
+    
+    # Define all roles and their permissions
+    ROLES = {
+        'admin': {
+            'description': 'Full system access',
+            'permissions': ['*']  # Wildcard = all permissions
+        },
+        'architect': {
+            'description': 'Design and provision infrastructure',
+            'permissions': [
+                'view_dashboard',
+                'view_resources',
+                'provision_resources',
+                'design_architecture',
+                'use_devex',
+                'view_costs',
+                'manage_policies'
+            ]
+        },
+        'developer': {
+            'description': 'Deploy and manage applications',
+            'permissions': [
+                'view_dashboard',
+                'view_resources',
+                'deploy_applications',
+                'use_devex'
+            ]
+        },
+        'finops': {
+            'description': 'Financial operations and cost management',
+            'permissions': [
+                'view_dashboard',
+                'view_costs'
+            ]
+        },
+        'security': {
+            'description': 'Security and compliance management',
+            'permissions': [
+                'view_dashboard',
+                'view_security'
+            ]
+        },
+        'viewer': {
+            'description': 'Read-only access',
+            'permissions': [
+                'view_dashboard',
+                'view_resources',
+                'view_costs'
+            ]
+        }
+    }
+    
+    @staticmethod
+    def has_permission(user_role: str, required_permission: str) -> bool:
+        """Check if a role has a specific permission"""
+        
+        if not user_role or user_role not in RoleManager.ROLES:
+            return False
+        
+        role_permissions = RoleManager.ROLES[user_role]['permissions']
+        
+        # Check for wildcard (admin)
+        if '*' in role_permissions:
+            return True
+        
+        # Check for specific permission
+        return required_permission in role_permissions
+    
+    @staticmethod
+    def get_user_permissions(user_role: str) -> List[str]:
+        """Get all permissions for a role"""
+        if not user_role or user_role not in RoleManager.ROLES:
+            return []
+        
+        permissions = RoleManager.ROLES[user_role]['permissions']
+        
+        # If wildcard, return all possible permissions
+        if '*' in permissions:
+            all_permissions = set()
+            for role_data in RoleManager.ROLES.values():
+                all_permissions.update(role_data['permissions'])
+            all_permissions.discard('*')
+            return list(all_permissions)
+        
+        return permissions
+
+
+def require_permission(permission: str) -> Callable:
+    """
+    Decorator to require specific permission for a function
+    
+    Usage:
+        @require_permission('view_dashboard')
+        def render():
+            st.write("Dashboard content")
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Get current user from session
+            user_manager = st.session_state.get('user_manager')
+            if not user_manager:
+                st.error("❌ Authentication required")
+                st.info("Please login to access this feature")
+                return
+            
+            current_user = user_manager.get_current_user()
+            if not current_user:
+                st.error("❌ User session not found")
+                st.info("Please logout and login again")
+                return
+            
+            user_role = current_user.get('role', 'viewer')
+            
+            # Check permission
+            if not RoleManager.has_permission(user_role, permission):
+                st.error("❌ You don't have permission to access this feature")
+                st.info(f"""
+                **Required permission:** `{permission}`  
+                **Your role:** `{user_role}`  
+                
+                Contact your administrator to request access.
+                """)
+                
+                # Log permission denial
+                try:
+                    from auth_database_firebase import get_database_manager
+                    db_manager = get_database_manager()
+                    if db_manager:
+                        db_manager.log_event(
+                            user_id=current_user['id'],
+                            event_type='permission_denied',
+                            event_data={
+                                'permission': permission,
+                                'role': user_role,
+                                'module': func.__name__
+                            }
+                        )
+                except:
+                    pass
+                
+                return
+            
+            # Permission granted - execute function
+            return func(*args, **kwargs)
+        
+        return wrapper
+    return decorator
+
+
+# ============================================================================
+# AZURE AD AUTHENTICATION WITH PKCE
+# ============================================================================
+
 class AzureAuthManager:
-    """Manages Azure AD authentication with proper cookie handling"""
+    """Manages Azure AD authentication with PKCE (no cookies needed!)"""
     
     def __init__(self, client_id: str, client_secret: str, tenant_id: str = "common"):
         self.client_id = client_id
@@ -130,8 +292,12 @@ class AzureAuthManager:
         }
 
 
+# ============================================================================
+# LOGIN UI
+# ============================================================================
+
 def render_login_with_pkce():
-    """Render login UI with PKCE-based OAuth (no cookies needed!)"""
+    """Render login UI with PKCE-based OAuth (works in all browsers!)"""
     
     st.title("🔐 Sign In")
     st.caption("Secure authentication with Azure Active Directory")
@@ -179,13 +345,15 @@ def render_login_with_pkce():
     else:
         # Show login button
         st.info("""
-        ℹ️ **Browser Compatibility Note**
+        ℹ️ **Browser Compatibility**
         
-        If you're using Edge or Incognito mode and experience issues:
-        - Make sure to allow cookies for this site
-        - Or use regular Chrome/Firefox
+        This authentication works in:
+        ✅ Chrome (normal and incognito)
+        ✅ Edge (normal and InPrivate)
+        ✅ Firefox (normal and private)
+        ✅ All modern browsers!
         
-        This authentication method works in all browsers!
+        No cookie configuration needed!
         """)
         
         if st.button("🔷 Sign in with Microsoft", use_container_width=True, type="primary"):
@@ -200,6 +368,7 @@ def render_login_with_pkce():
             
             # Redirect using JavaScript (works in all modes)
             st.markdown(f"""
+            <meta http-equiv="refresh" content="0; url={auth_url}">
             <script>
                 window.location.href = "{auth_url}";
             </script>
@@ -212,3 +381,16 @@ def render_login_with_pkce():
 def render_login():
     """Alias for backward compatibility"""
     render_login_with_pkce()
+
+
+# ============================================================================
+# EXPORTS
+# ============================================================================
+
+__all__ = [
+    'RoleManager',
+    'require_permission',
+    'AzureAuthManager',
+    'render_login',
+    'render_login_with_pkce'
+]
