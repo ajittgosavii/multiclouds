@@ -153,3 +153,97 @@ class Helpers:
             b64 = base64.b64encode(json_str.encode()).decode()
             href = f'<a href="data:application/json;base64,{b64}" download="{filename}">{label}</a>'
             st.markdown(href, unsafe_allow_html=True)
+
+
+# ==================================================================================
+# ANTHROPIC HELPER CLASS - AI FEATURES
+# ==================================================================================
+
+class AnthropicHelper:
+    """Helper class for Anthropic Claude AI integration"""
+    
+    def __init__(self, api_key: Optional[str] = None):
+        """Initialize Anthropic helper"""
+        self.api_key = api_key or self._get_api_key()
+        self.client = None
+        
+        if self.api_key:
+            try:
+                import anthropic
+                self.client = anthropic.Anthropic(api_key=self.api_key)
+            except ImportError:
+                st.warning("⚠️ Anthropic library not installed. Run: pip install anthropic")
+            except Exception as e:
+                st.warning(f"⚠️ Could not initialize Anthropic client: {str(e)}")
+    
+    @staticmethod
+    def _get_api_key() -> Optional[str]:
+        """Get API key from secrets or environment"""
+        # Try Streamlit secrets first
+        if hasattr(st, 'secrets'):
+            try:
+                if 'anthropic' in st.secrets and 'api_key' in st.secrets['anthropic']:
+                    return st.secrets['anthropic']['api_key']
+                elif 'ANTHROPIC_API_KEY' in st.secrets:
+                    return st.secrets['ANTHROPIC_API_KEY']
+            except Exception:
+                pass
+        
+        # Try environment variable
+        import os
+        return os.getenv('ANTHROPIC_API_KEY')
+    
+    def chat(self, prompt: str, context: Optional[str] = None) -> str:
+        """
+        Send a chat message to Claude and get response
+        
+        Args:
+            prompt: The user's message/question
+            context: Optional context to provide to Claude
+            
+        Returns:
+            Claude's response as a string
+        """
+        if not self.client:
+            return "⚠️ AI features not available. Please configure ANTHROPIC_API_KEY."
+        
+        try:
+            # Build the message
+            if context:
+                full_prompt = f"Context: {context}\n\nQuestion: {prompt}"
+            else:
+                full_prompt = prompt
+            
+            # Call Claude API
+            message = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=2000,
+                messages=[
+                    {"role": "user", "content": full_prompt}
+                ]
+            )
+            
+            # Extract response text
+            response_text = ""
+            for content_block in message.content:
+                if hasattr(content_block, 'text'):
+                    response_text += content_block.text
+            
+            return response_text
+            
+        except Exception as e:
+            return f"❌ Error: {str(e)}"
+    
+    def is_available(self) -> bool:
+        """Check if AI features are available"""
+        return self.client is not None
+
+
+# ==================================================================================
+# HELPER FACTORY FUNCTIONS
+# ==================================================================================
+
+@st.cache_resource
+def get_anthropic_helper() -> AnthropicHelper:
+    """Get cached Anthropic helper instance"""
+    return AnthropicHelper()
