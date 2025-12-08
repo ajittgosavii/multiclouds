@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 from config_settings import AppConfig
 from core_account_manager import get_account_manager
 from utils_helpers import Helpers
+from auth_azure_sso import require_permission
 import json
 import os
 import random
@@ -365,7 +366,6 @@ def natural_language_query(query: str, cost_data: Dict) -> str:
     
     try:
         import anthropic
-from auth_azure_sso import require_permission
         message = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=1000,
