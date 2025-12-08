@@ -6,11 +6,14 @@ Main overview for Google Cloud Platform projects and resources
 import streamlit as st
 from gcp_theme import GCPTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class GCPDashboardModule:
     """GCP Dashboard module"""
     
     @staticmethod
+    @require_permission('view_dashboard')
+
     def render():
         """Render GCP dashboard"""
         

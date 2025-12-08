@@ -11,6 +11,8 @@ class GCPDevExModule:
     """GCP Developer Experience - Practical Coding Helper"""
     
     @staticmethod
+    @require_permission('use_devex')
+
     def render():
         """Render GCP DevEx module"""
         
@@ -894,6 +896,7 @@ gcloud config get-value project
 In Python, create bucket if it doesn't exist:
 ```python
 from google.cloud import storage
+from auth_azure_sso import require_permission
 
 client = storage.Client()
 bucket_name = 'my-bucket'

@@ -9,6 +9,7 @@ import pandas as pd
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 import json
+from auth_azure_sso import require_permission
 
 # ============================================================================
 # CI/CD INTEGRATION (DEMO MODE - Shows sample data)
@@ -119,6 +120,8 @@ class GCPProvisioningModule:
     """GCP Infrastructure Provisioning & Deployment"""
     
     @staticmethod
+    @require_permission('provision_resources')
+
     def render():
         """Main render function"""
         

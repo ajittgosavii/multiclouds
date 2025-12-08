@@ -8,11 +8,14 @@ import pandas as pd
 from datetime import datetime, timedelta
 from gcp_theme import GCPTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class GCPOperationsModule:
     """AI-Enhanced GCP Operations"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Main render method"""
         

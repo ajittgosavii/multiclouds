@@ -10,11 +10,14 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from gcp_theme import GCPTheme
 from config_settings import AppConfig
+from auth_azure_sso import require_permission
 
 class GCPDatabaseModule:
     """AI-Enhanced GCP Database Intelligence"""
     
     @staticmethod
+    @require_permission('view_resources')
+
     def render():
         """Render GCP Database Intelligence Center"""
         
