@@ -817,3 +817,8 @@ Include specific az CLI commands and resource paths.
             - Azure DNS Failover Configuration
             - VM Patching with Update Management
             """)
+
+# Module-level render function
+def render():
+    """Module-level render function"""
+    AzureAIAssistantModule.render()
