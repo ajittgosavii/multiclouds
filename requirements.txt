@@ -21,6 +21,7 @@ matplotlib>=3.8.0
 python-dotenv>=1.0.0
 pydantic>=2.5.0
 python-dateutil>=2.8.2
+pyyaml>=6.0
 
 # Caching & Performance
 streamlit-autorefresh>=0.0.1
