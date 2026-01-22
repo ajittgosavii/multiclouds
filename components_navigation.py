@@ -32,6 +32,7 @@ class Navigation:
             {"key": "Design & Planning", "icon": "📐", "label": "Design"},
             {"key": "Provisioning", "icon": "🚀", "label": "Provisioning"},
             {"key": "CI/CD", "icon": "📄", "label": "CI/CD"},
+            {"key": "Harness CI/CD", "icon": "🔷", "label": "Harness"},
             {"key": "Operations", "icon": "⚙️", "label": "Operations"},
             {"key": "Advanced Operations", "icon": "⚡", "label": "Advanced Ops"},
             {"key": "Security", "icon": "🤖", "label": "Security & AI"},
@@ -193,6 +194,14 @@ class Navigation:
             except Exception as e:
                 st.error(f"Error loading CI/CD: {str(e)}")
         
+        # Module 7.5: Harness CI/CD (Enterprise CI/CD Orchestration)
+        elif active_module == "Harness CI/CD":
+            try:
+                from harness_cicd_module import render as render_harness_cicd
+                render_harness_cicd()
+            except Exception as e:
+                st.error(f"Error loading Harness CI/CD: {str(e)}")
+        
         # Module 8: Operations
         elif active_module == "Operations":
             try:
@@ -283,6 +292,7 @@ class Navigation:
             "Design & Planning": "azure_modules_design_planning",
             "Provisioning": "azure_modules_provisioning",
             "CI/CD": "azure_modules_cicd_unified",
+            "Harness CI/CD": "harness_cicd_module",
             "Operations": "azure_modules_operations_enhanced",
             "Advanced Operations": "azure_modules_advanced_operations",
             "Security": "azure_modules_security_and_compliance",
@@ -325,6 +335,7 @@ class Navigation:
             "Design & Planning": "gcp_modules_design_planning",
             "Provisioning": "gcp_modules_provisioning",
             "CI/CD": "gcp_modules_cicd_unified",
+            "Harness CI/CD": "harness_cicd_module",
             "Operations": "gcp_modules_operations_enhanced",
             "Advanced Operations": "gcp_modules_advanced_operations",
             "Security": "gcp_modules_security_compliance",
